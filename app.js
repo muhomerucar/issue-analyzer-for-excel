@@ -172,11 +172,19 @@ function satırlariIsle(rawRows) {
     var test = row[colMap.test] || '';
     tip = tip.toUpperCase().trim();
     ay  = ay.toUpperCase().trim();
-    // Test kaynaklı mı?
+    if (!tip) tip = '(Belirsiz)';
+    if (!ay)  ay  = '(Belirsiz)';
+    // Test kaynaklı mı? Boş değer null (Belirsiz) olarak işaretlenir — istatistikleri etkilemez
     var testNorm = normStr(test);
-    var testKaynakli = testNorm === 'EVET' || testNorm === 'E' ||
-                       testNorm === 'YES'  || testNorm === 'TRUE' || testNorm === '1';
-    if (!tip || !ay) return;
+    var testKaynakli;
+    if (testNorm === 'EVET' || testNorm === 'E' ||
+        testNorm === 'YES'  || testNorm === 'TRUE' || testNorm === '1') {
+      testKaynakli = true;
+    } else if (!testNorm) {
+      testKaynakli = null;
+    } else {
+      testKaynakli = false;
+    }
     allRows.push({
       _sayfa: row._sayfa,
       tip: tip,
@@ -479,16 +487,20 @@ function analiz() {
 
 // ─── KPI ─────────────────────────────────────────────────────────────────────
 function kpiGuncelle(rows) {
-  var evet = rows.filter(function(r){ return r.testKaynakli; }).length;
-  var hayir = rows.length - evet;
-  var oran = rows.length ? ((evet / rows.length) * 100).toFixed(1) : '0';
+  var bel   = rows.filter(function(r){ return r.testKaynakli === null; }).length;
+  var valid = rows.filter(function(r){ return r.testKaynakli !== null; });
+  var evet  = valid.filter(function(r){ return r.testKaynakli; }).length;
+  var hayir = valid.length - evet;
+  var oran  = valid.length ? ((evet / valid.length) * 100).toFixed(1) : '0';
   var etiket = filtreEtiketi();
   document.getElementById('kpiEvet').textContent = evet;
   document.getElementById('kpiHayir').textContent = hayir;
+  document.getElementById('kpiBel').textContent = bel;
   document.getElementById('kpiToplam').textContent = rows.length;
   document.getElementById('kpiOran').textContent = '%' + oran;
   document.getElementById('kpiEvetSub').textContent = etiket;
   document.getElementById('kpiHayirSub').textContent = etiket;
+  document.getElementById('kpiBelSub').textContent = etiket;
   document.getElementById('kpiToplamSub').textContent = etiket;
   document.getElementById('kpiRow').style.display = 'grid';
 }
@@ -507,16 +519,19 @@ function anaTabloGuncelle(rows) {
   if (!tipler.length) { document.getElementById('mainCard').style.display = 'none'; return; }
 
   var matrix = {};
-  tipler.forEach(function(t){ matrix[t] = {evet:0, hayir:0}; });
+  tipler.forEach(function(t){ matrix[t] = {evet:0, hayir:0, bel:0}; });
   rows.forEach(function(r){
     if (!matrix[r.tip]) return;
-    if (r.testKaynakli) matrix[r.tip].evet++;
+    if (r.testKaynakli === null) matrix[r.tip].bel++;
+    else if (r.testKaynakli) matrix[r.tip].evet++;
     else matrix[r.tip].hayir++;
   });
 
-  var topEvet  = rows.filter(function(r){ return r.testKaynakli; }).length;
-  var topHayir = rows.length - topEvet;
+  var topEvet   = rows.filter(function(r){ return r.testKaynakli === true; }).length;
+  var topHayir  = rows.filter(function(r){ return r.testKaynakli === false; }).length;
+  var topBel    = rows.filter(function(r){ return r.testKaynakli === null; }).length;
   var topToplam = rows.length;
+  var topValid  = topEvet + topHayir;
 
   document.getElementById('mainTitle').textContent = 'TİP Bazlı Özet';
   document.getElementById('mainSub').textContent = filtreEtiketi() + ' | ' + rows.length + ' kayit';
@@ -529,6 +544,7 @@ function anaTabloGuncelle(rows) {
     '<th class="c h-evet">%</th>' +
     '<th class="r h-hayir">Test Dışı (HAYIR)</th>' +
     '<th class="c h-hayir">%</th>' +
+    '<th class="r" style="color:var(--text3)">Belirsiz</th>' +
     '<th class="r h-top">Toplam</th>' +
     '<th class="c h-top">Test Oranı</th>' +
     '<th class="r h-top">Dağılım</th>' +
@@ -538,11 +554,11 @@ function anaTabloGuncelle(rows) {
   tbody.innerHTML = '';
   tipler.forEach(function(tip) {
     var d = matrix[tip];
-    var tot = d.evet + d.hayir;
-    var ep = tot ? ((d.evet/tot)*100).toFixed(1) : '0';
-    var hp = tot ? ((d.hayir/tot)*100).toFixed(1) : '0';
-    var to = tot ? ((d.evet/tot)*100).toFixed(1) : '0';
-    var bw = topToplam ? Math.round((tot/topToplam)*100) : 0;
+    var valid = d.evet + d.hayir;
+    var ep = valid ? ((d.evet/valid)*100).toFixed(1) : '0';
+    var hp = valid ? ((d.hayir/valid)*100).toFixed(1) : '0';
+    var to = valid ? ((d.evet/valid)*100).toFixed(1) : '0';
+    var bw = topValid ? Math.round((valid/topValid)*100) : 0;
     var tr = document.createElement('tr');
     tr.innerHTML =
       '<td><strong>' + tip + '</strong></td>' +
@@ -550,21 +566,23 @@ function anaTabloGuncelle(rows) {
       '<td class="c"><small style="color:var(--text3)">%' + ep + '</small></td>' +
       '<td class="r" style="color:' + (d.hayir>0?'var(--green)':'var(--text3)') + ';font-weight:' + (d.hayir>0?'700':'400') + '">' + d.hayir + '</td>' +
       '<td class="c"><small style="color:var(--text3)">%' + hp + '</small></td>' +
-      '<td class="r" style="font-weight:700">' + tot + '</td>' +
+      '<td class="r" style="color:' + (d.bel>0?'var(--text2)':'var(--text3)') + ';font-weight:' + (d.bel>0?'700':'400') + '">' + (d.bel||'—') + '</td>' +
+      '<td class="r" style="font-weight:700">' + (d.evet+d.hayir+d.bel) + '</td>' +
       '<td class="c"><span class="oran-badge" style="background:' + oranRenk(parseFloat(to)) + '">%' + to + '</span></td>' +
       '<td class="r"><div class="mini-bar"><div class="mbt"><div class="mbf" style="width:' + bw + '%"></div></div><span style="font-size:11px;color:var(--text3)">' + bw + '%</span></div></td>';
     tbody.appendChild(tr);
   });
 
-  var to2 = topToplam ? ((topEvet/topToplam)*100).toFixed(1) : '0';
+  var to2 = topValid ? ((topEvet/topValid)*100).toFixed(1) : '0';
   var trTot = document.createElement('tr');
   trTot.className = 'trow-total';
   trTot.innerHTML =
     '<td>TOPLAM</td>' +
     '<td class="r" style="color:var(--red)">' + topEvet + '</td>' +
-    '<td class="c"><small style="color:var(--text3)">%' + (topToplam?((topEvet/topToplam)*100).toFixed(1):0) + '</small></td>' +
+    '<td class="c"><small style="color:var(--text3)">%' + (topValid?((topEvet/topValid)*100).toFixed(1):0) + '</small></td>' +
     '<td class="r" style="color:var(--green)">' + topHayir + '</td>' +
-    '<td class="c"><small style="color:var(--text3)">%' + (topToplam?((topHayir/topToplam)*100).toFixed(1):0) + '</small></td>' +
+    '<td class="c"><small style="color:var(--text3)">%' + (topValid?((topHayir/topValid)*100).toFixed(1):0) + '</small></td>' +
+    '<td class="r" style="color:var(--text3)">' + topBel + '</td>' +
     '<td class="r">' + topToplam + '</td>' +
     '<td class="c"><span class="oran-badge" style="background:' + oranRenk(parseFloat(to2)) + '">%' + to2 + '</span></td>' +
     '<td></td>';
@@ -589,15 +607,16 @@ function trendCiz() {
   document.getElementById('chartSub').textContent = aylar.map(ayGoster).join(' | ');
 
   var src = filteredRows.length ? filteredRows : allRows;
-  var evetData = [], hayirData = [];
+  var evetData = [], hayirData = [], belData = [];
   aylar.forEach(function(ay) {
     var r = src.filter(function(row) {
       if (row.ay !== ay) return false;
       if (trendTip !== 'ALL' && row.tip !== trendTip) return false;
       return true;
     });
-    evetData.push(r.filter(function(x){ return x.testKaynakli; }).length);
-    hayirData.push(r.filter(function(x){ return !x.testKaynakli; }).length);
+    evetData.push(r.filter(function(x){ return x.testKaynakli === true; }).length);
+    hayirData.push(r.filter(function(x){ return x.testKaynakli === false; }).length);
+    belData.push(r.filter(function(x){ return x.testKaynakli === null; }).length);
   });
 
   if (trendChart) { trendChart.destroy(); trendChart = null; }
@@ -611,6 +630,9 @@ function trendCiz() {
           borderWidth: 1, borderRadius: 3, stack: 'main' },
         { label: 'Test Dışı (HAYIR)', data: hayirData,
           backgroundColor: 'rgba(21,105,42,0.65)', borderColor: '#15692a',
+          borderWidth: 1, borderRadius: 3, stack: 'main' },
+        { label: 'Belirsiz', data: belData,
+          backgroundColor: 'rgba(150,150,150,0.35)', borderColor: '#aaa',
           borderWidth: 1, borderRadius: 3, stack: 'main' }
       ]
     },
@@ -622,8 +644,11 @@ function trendCiz() {
           callbacks: {
             footer: function(items) {
               var ai = items[0].dataIndex;
-              var t = evetData[ai] + hayirData[ai];
-              return 'Toplam: ' + t + (t > 0 ? '  (%' + ((evetData[ai]/t)*100).toFixed(1) + ' test kaynaklı)' : '');
+              var valid = evetData[ai] + hayirData[ai];
+              var bel = belData[ai];
+              return 'Toplam: ' + (valid + bel) +
+                (valid > 0 ? '  (%' + ((evetData[ai]/valid)*100).toFixed(1) + ' test kaynaklı)' : '') +
+                (bel > 0 ? '  [' + bel + ' belirsiz]' : '');
             }
           },
           backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ddd',
@@ -650,18 +675,22 @@ function sayfaDetayGuncelle(rows) {
   sayfalar.forEach(function(sayfa) {
     var sr = rows.filter(function(r){ return r._sayfa === sayfa; });
     if (!sr.length) return;
-    var evet = sr.filter(function(r){ return r.testKaynakli; }).length;
-    var hayir = sr.length - evet;
-    var oran = sr.length ? ((evet/sr.length)*100).toFixed(1) : '0';
+    var evet  = sr.filter(function(r){ return r.testKaynakli === true; }).length;
+    var hayir = sr.filter(function(r){ return r.testKaynakli === false; }).length;
+    var bel   = sr.filter(function(r){ return r.testKaynakli === null; }).length;
+    var valid = evet + hayir;
+    var oran  = valid ? ((evet/valid)*100).toFixed(1) : '0';
     var tipler = mevcutTipler(sr);
     var tipRows = tipler.map(function(t) {
-      var te = sr.filter(function(r){ return r.tip===t&&r.testKaynakli; }).length;
-      var th = sr.filter(function(r){ return r.tip===t&&!r.testKaynakli; }).length;
+      var te = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===true; }).length;
+      var th = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===false; }).length;
+      var tb = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===null; }).length;
       return '<tr>' +
         '<td style="padding:6px 12px;font-size:12px;font-weight:600">' + t + '</td>' +
         '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;color:var(--red);font-weight:700">' + te + '</td>' +
         '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;color:var(--green);font-weight:700">' + th + '</td>' +
-        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700">' + (te+th) + '</td>' +
+        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;color:var(--text3);font-weight:' + (tb>0?'700':'400') + '">' + (tb||'—') + '</td>' +
+        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700">' + (te+th+tb) + '</td>' +
         '</tr>';
     }).join('');
     var card = document.createElement('div');
@@ -672,7 +701,7 @@ function sayfaDetayGuncelle(rows) {
         '<div style="font-size:10px;color:var(--text3);margin-top:1px" title="'+sayfa+'">' + sayfa + '</div></div>' +
         '<div style="text-align:right">' +
           '<div style="font-family:var(--fm);font-size:20px;font-weight:700;color:var(--red)">' + sr.length + '</div>' +
-          '<div style="font-size:10px;color:var(--text3)">%'+oran+' test kaynaklı</div>' +
+          '<div style="font-size:10px;color:var(--text3)">%'+oran+' test kaynaklı' + (bel>0?' · '+bel+' belirsiz':'') + '</div>' +
         '</div>' +
       '</div>' +
       '<table style="width:100%">' +
@@ -680,6 +709,7 @@ function sayfaDetayGuncelle(rows) {
           '<th style="padding:6px 12px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);background:var(--card2);border-bottom:1px solid var(--border2)">TIP</th>' +
           '<th style="padding:6px 12px;font-size:9px;color:var(--red);background:rgba(192,0,0,0.06);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">EVET</th>' +
           '<th style="padding:6px 12px;font-size:9px;color:var(--green);background:rgba(21,105,42,0.06);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">HAYIR</th>' +
+          '<th style="padding:6px 12px;font-size:9px;color:var(--text3);background:var(--card2);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">BELİRSİZ</th>' +
           '<th style="padding:6px 12px;font-size:9px;color:#333;background:var(--card2);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">TOPLAM</th>' +
         '</tr></thead>' +
         '<tbody>' + tipRows + '</tbody>' +
@@ -687,6 +717,7 @@ function sayfaDetayGuncelle(rows) {
           '<td style="padding:6px 12px;font-size:12px;font-weight:700;color:var(--red);border-top:2px solid var(--border2)">TOPLAM</td>' +
           '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--red);border-top:2px solid var(--border2)">' + evet + '</td>' +
           '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--green);border-top:2px solid var(--border2)">' + hayir + '</td>' +
+          '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text3);border-top:2px solid var(--border2)">' + bel + '</td>' +
           '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;border-top:2px solid var(--border2)">' + sr.length + '</td>' +
         '</tr></tfoot>' +
       '</table>';
@@ -723,7 +754,7 @@ function exportExcel() {
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ayOzet), 'Ay Bazlı');
 
   var ham = [['Sayfa','TIP','AY','Test Kaynaklı']].concat(
-    rows.map(function(r){ return [r._sayfa, r.tip, r.ay, r.testKaynakli?'EVET':'HAYIR']; })
+    rows.map(function(r){ return [r._sayfa, r.tip, r.ay, r.testKaynakli===null?'BELİRSİZ':r.testKaynakli?'EVET':'HAYIR']; })
   );
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ham), 'Ham Veri');
   XLSX.writeFile(wb2, 'qa-issue-dashboard.xlsx');
@@ -734,7 +765,7 @@ function exportExcel() {
 function exportCsv() {
   var rows = filteredRows.length ? filteredRows : allRows;
   var lines = ['Sayfa,TİP,AY,Test Kaynaklı'].concat(
-    rows.map(function(r){ return [r._sayfa,r.tip,r.ay,r.testKaynakli?'EVET':'HAYIR'].join(','); })
+    rows.map(function(r){ return [r._sayfa,r.tip,r.ay,r.testKaynakli===null?'BELİRSİZ':r.testKaynakli?'EVET':'HAYIR'].join(','); })
   );
   var blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a'); a.href=URL.createObjectURL(blob);

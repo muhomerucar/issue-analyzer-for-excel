@@ -20,8 +20,9 @@ Her ay güncellenen QA defect raporlarını analiz eden, tarayıcı tabanlı das
 |---|---|
 | Otomatik sütun eşleştirme | TİP, AY, TEST KAYNAKLI sütunları otomatik bulunur |
 | Çoklu sayfa desteği | Birden fazla Excel sayfası birlikte analiz edilir |
-| TİP × Test Kaynaklı tablosu | PR / KR / Hotfix / Rollback bazında EVET/HAYIR dağılımı |
-| Aylık trend grafiği | Stacked bar, TİP filtresiyle kırılabilir |
+| TİP × Test Kaynaklı tablosu | PR / KR / Hotfix / Rollback bazında EVET / HAYIR / Belirsiz dağılımı |
+| Belirsiz kayıt desteği | Boş TİP, AY veya TEST KAYNAKLI hücreleri `(Belirsiz)` olarak işaretlenir; test oranı hesaplarını etkilemez |
+| Aylık trend grafiği | Stacked bar (EVET / HAYIR / Belirsiz), TİP filtresiyle kırılabilir |
 | Sayfa bazlı detay | Her direktörlük ayrı kart olarak gösterilir |
 | Dışa aktarım | Excel (.xlsx), CSV, PDF/Yazdır |
 
@@ -31,10 +32,12 @@ Her ay güncellenen QA defect raporlarını analiz eden, tarayıcı tabanlı das
 
 ```
 qa-issue-dashboard/
-├── index.html    → HTML iskelet ve sayfa yapısı
-├── style.css     → Tüm stiller (Turkish Airlines kırmızı/beyaz tema)
-├── app.js        → Uygulama mantığı (veri yükleme, filtreleme, analiz)
-└── README.md     → Bu dosya
+├── index.html      → HTML iskelet ve sayfa yapısı
+├── style.css       → Tüm stiller (Turkish Airlines kırmızı/beyaz tema)
+├── app.js          → Uygulama mantığı (veri yükleme, filtreleme, analiz)
+├── app.test.js     → Birim testler (Jest)
+├── package.json    → Test bağımlılıkları
+└── README.md       → Bu dosya
 ```
 
 ---
@@ -48,6 +51,17 @@ qa-issue-dashboard/
 | IBM Plex Sans/Mono | — | Yazı tipi (Google Fonts) |
 
 > İnternet bağlantısı gerektirir (CDN ve Google Fonts için).
+
+---
+
+## Testleri çalıştırma
+
+```bash
+npm install
+npm test
+```
+
+Saf mantık fonksiyonları test edilir (`normStr`, `findCol`, `filtrele`, `mevcutTipler` vb.). DOM veya Excel bağımlılığı yoktur.
 
 ---
 

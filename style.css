@@ -152,6 +152,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:14px
 .kpi.k-green::after{background:var(--green)}
 .kpi.k-amber::after{background:#c07000}
 .kpi.k-dark::after{background:#333}
+.kpi.k-bel::after{background:#999}
 .kpi-lbl{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.06em;
          text-transform:uppercase;margin-bottom:7px}
 .kpi-val{font-family:var(--fm);font-size:30px;font-weight:600;line-height:1;margin-bottom:4px}
