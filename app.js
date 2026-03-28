@@ -730,26 +730,33 @@ function exportExcel() {
   var rows = filteredRows.length ? filteredRows : allRows;
   var wb2 = XLSX.utils.book_new();
   var tipler = mevcutTipler(rows);
-  var ozet = [['TIP','Test Kaynaklı (EVET)','% (EVET)','Test Dışı (HAYIR)','% (HAYIR)','Toplam','Test Oranı %']];
+  var ozet = [['TIP','Test Kaynaklı (EVET)','% (EVET)','Test Dışı (HAYIR)','% (HAYIR)','Belirsiz','Toplam','Test Oranı %']];
   tipler.forEach(function(t) {
-    var te=rows.filter(function(r){return r.tip===t&&r.testKaynakli;}).length;
-    var th=rows.filter(function(r){return r.tip===t&&!r.testKaynakli;}).length;
-    var tot=te+th;
-    ozet.push([t, te, tot?+(te/tot*100).toFixed(1):0, th, tot?+(th/tot*100).toFixed(1):0, tot, tot?+(te/tot*100).toFixed(1):0]);
+    var te=rows.filter(function(r){return r.tip===t&&r.testKaynakli===true;}).length;
+    var th=rows.filter(function(r){return r.tip===t&&r.testKaynakli===false;}).length;
+    var tb=rows.filter(function(r){return r.tip===t&&r.testKaynakli===null;}).length;
+    var valid=te+th;
+    ozet.push([t, te, valid?+(te/valid*100).toFixed(1):0, th, valid?+(th/valid*100).toFixed(1):0, tb, te+th+tb, valid?+(te/valid*100).toFixed(1):0]);
   });
-  var e=rows.filter(function(r){return r.testKaynakli;}).length, tot=rows.length;
-  ozet.push(['TOPLAM',e,tot?+(e/tot*100).toFixed(1):0,tot-e,tot?+((tot-e)/tot*100).toFixed(1):0,tot,tot?+(e/tot*100).toFixed(1):0]);
+  var e=rows.filter(function(r){return r.testKaynakli===true;}).length;
+  var h=rows.filter(function(r){return r.testKaynakli===false;}).length;
+  var b=rows.filter(function(r){return r.testKaynakli===null;}).length;
+  var valid=e+h;
+  ozet.push(['TOPLAM',e,valid?+(e/valid*100).toFixed(1):0,h,valid?+(h/valid*100).toFixed(1):0,b,rows.length,valid?+(e/valid*100).toFixed(1):0]);
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ozet), 'Özet');
 
   var aylar = tumDegerler('ay', rows).sort(function(a,b){
     var ai=AY_ORDER.indexOf(normStr(a)),bi=AY_ORDER.indexOf(normStr(b));
     if(ai>=0&&bi>=0)return ai-bi;if(ai>=0)return-1;if(bi>=0)return 1;return a.localeCompare(b,'tr');
   });
-  var ayOzet = [['AY','Test Kaynaklı','Test Disi','Toplam','Test Oranı %']];
+  var ayOzet = [['AY','Test Kaynaklı','Test Dışı','Belirsiz','Toplam','Test Oranı %']];
   aylar.forEach(function(ay) {
     var r=rows.filter(function(x){return x.ay===ay;});
-    var ev=r.filter(function(x){return x.testKaynakli;}).length;
-    ayOzet.push([ay, ev, r.length-ev, r.length, r.length?+(ev/r.length*100).toFixed(1):0]);
+    var ev=r.filter(function(x){return x.testKaynakli===true;}).length;
+    var hy=r.filter(function(x){return x.testKaynakli===false;}).length;
+    var bl=r.filter(function(x){return x.testKaynakli===null;}).length;
+    var v=ev+hy;
+    ayOzet.push([ay, ev, hy, bl, r.length, v?+(ev/v*100).toFixed(1):0]);
   });
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ayOzet), 'Ay Bazlı');
 
@@ -769,7 +776,8 @@ function exportCsv() {
   );
   var blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='qa-issue-dashboard.csv'; a.click();
+  a.download='qa-issue-dashboard.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   document.getElementById('expDrop').classList.remove('open');
   toast('CSV indirildi', 'ok');
 }
