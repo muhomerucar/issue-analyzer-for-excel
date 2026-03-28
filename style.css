@@ -203,6 +203,20 @@ tbody td.c{text-align:center;font-family:var(--fm)}
 
 /* SAYFA DETAY */
 .sayfa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.sdt{width:100%}
+.sdt th{padding:6px 12px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--border2)}
+.sdt th.sdt-name{color:var(--text3);background:var(--card2)}
+.sdt th.sdt-evet{color:var(--red);background:rgba(192,0,0,0.06);text-align:right}
+.sdt th.sdt-hayir{color:var(--green);background:rgba(21,105,42,0.06);text-align:right}
+.sdt th.sdt-bel{color:var(--text3);background:var(--card2);text-align:right}
+.sdt th.sdt-top{color:#333;background:var(--card2);text-align:right}
+.sdt td{padding:6px 12px;font-size:12px}
+.sdt td.sdt-name{font-weight:600}
+.sdt td.sdt-num{text-align:right;font-family:var(--fm);font-weight:700}
+.sdt td.sdt-num.red{color:var(--red)}
+.sdt td.sdt-num.green{color:var(--green)}
+.sdt td.sdt-num.muted{color:var(--text3);font-weight:400}
+.sdt tfoot td{border-top:2px solid var(--border2)}
 
 /* EXPORT */
 .expw{position:relative}

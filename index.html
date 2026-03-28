@@ -234,7 +234,7 @@ function findCol(cols, keywords) {
 
 function resolveColumns(cols) {
   colMap.tip  = findCol(cols, ['TIP', 'TYPE', 'ISSUETYPE', 'ISSUE TYPE']);
-  colMap.ay   = findCol(cols, ['AY', 'MONTH', 'AYLAR', 'AY ']);
+  colMap.ay   = findCol(cols, ['AY', 'MONTH', 'AYLAR']);
   colMap.test = findCol(cols, ['TEST KAYNAKLI', 'TEST', 'CAUSED BY TEST', 'KAYNAK']);
   return colMap.tip && colMap.ay && colMap.test;
 }
@@ -742,7 +742,7 @@ function anaTabloGuncelle(rows) {
     var bw = topValid ? Math.round((valid/topValid)*100) : 0;
     var tr = document.createElement('tr');
     tr.innerHTML =
-      '<td><strong>' + tip + '</strong></td>' +
+      '<td><strong>' + escHtml(tip) + '</strong></td>' +
       '<td class="r" style="color:' + (d.evet>0?'var(--red)':'var(--text3)') + ';font-weight:' + (d.evet>0?'700':'400') + '">' + d.evet + '</td>' +
       '<td class="c"><small style="color:var(--text3)">%' + ep + '</small></td>' +
       '<td class="r" style="color:' + (d.hayir>0?'var(--green)':'var(--text3)') + ';font-weight:' + (d.hayir>0?'700':'400') + '">' + d.hayir + '</td>' +
@@ -867,39 +867,39 @@ function sayfaDetayGuncelle(rows) {
       var th = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===false; }).length;
       var tb = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===null; }).length;
       return '<tr>' +
-        '<td style="padding:6px 12px;font-size:12px;font-weight:600">' + t + '</td>' +
-        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;color:var(--red);font-weight:700">' + te + '</td>' +
-        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;color:var(--green);font-weight:700">' + th + '</td>' +
-        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;color:var(--text3);font-weight:' + (tb>0?'700':'400') + '">' + (tb||'—') + '</td>' +
-        '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700">' + (te+th+tb) + '</td>' +
+        '<td class="sdt-name">' + escHtml(t) + '</td>' +
+        '<td class="sdt-num red">' + te + '</td>' +
+        '<td class="sdt-num green">' + th + '</td>' +
+        '<td class="sdt-num' + (tb>0?'':' muted') + '">' + (tb||'—') + '</td>' +
+        '<td class="sdt-num">' + (te+th+tb) + '</td>' +
         '</tr>';
     }).join('');
     var card = document.createElement('div');
     card.className = 'table-card';
     card.innerHTML =
       '<div class="tc-hdr" style="padding:10px 14px">' +
-        '<div><div style="font-size:12px;font-weight:700">' + (sayfa.length>28?sayfa.slice(0,26)+'...':sayfa) + '</div>' +
-        '<div style="font-size:10px;color:var(--text3);margin-top:1px" title="'+sayfa+'">' + sayfa + '</div></div>' +
+        '<div><div style="font-size:12px;font-weight:700">' + escHtml(sayfa.length>28?sayfa.slice(0,26)+'...':sayfa) + '</div>' +
+        '<div style="font-size:10px;color:var(--text3);margin-top:1px" title="'+escHtml(sayfa)+'">' + escHtml(sayfa) + '</div></div>' +
         '<div style="text-align:right">' +
           '<div style="font-family:var(--fm);font-size:20px;font-weight:700;color:var(--red)">' + sr.length + '</div>' +
           '<div style="font-size:10px;color:var(--text3)">%'+oran+' test kaynaklı' + (bel>0?' · '+bel+' belirsiz':'') + '</div>' +
         '</div>' +
       '</div>' +
-      '<table style="width:100%">' +
+      '<table class="sdt">' +
         '<thead><tr>' +
-          '<th style="padding:6px 12px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);background:var(--card2);border-bottom:1px solid var(--border2)">TIP</th>' +
-          '<th style="padding:6px 12px;font-size:9px;color:var(--red);background:rgba(192,0,0,0.06);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">EVET</th>' +
-          '<th style="padding:6px 12px;font-size:9px;color:var(--green);background:rgba(21,105,42,0.06);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">HAYIR</th>' +
-          '<th style="padding:6px 12px;font-size:9px;color:var(--text3);background:var(--card2);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">BELİRSİZ</th>' +
-          '<th style="padding:6px 12px;font-size:9px;color:#333;background:var(--card2);text-align:right;border-bottom:1px solid var(--border2);font-weight:700">TOPLAM</th>' +
+          '<th class="sdt-name">TIP</th>' +
+          '<th class="sdt-evet">EVET</th>' +
+          '<th class="sdt-hayir">HAYIR</th>' +
+          '<th class="sdt-bel">BELİRSİZ</th>' +
+          '<th class="sdt-top">TOPLAM</th>' +
         '</tr></thead>' +
         '<tbody>' + tipRows + '</tbody>' +
         '<tfoot><tr>' +
-          '<td style="padding:6px 12px;font-size:12px;font-weight:700;color:var(--red);border-top:2px solid var(--border2)">TOPLAM</td>' +
-          '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--red);border-top:2px solid var(--border2)">' + evet + '</td>' +
-          '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--green);border-top:2px solid var(--border2)">' + hayir + '</td>' +
-          '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;color:var(--text3);border-top:2px solid var(--border2)">' + bel + '</td>' +
-          '<td style="padding:6px 12px;text-align:right;font-family:var(--fm);font-size:12px;font-weight:700;border-top:2px solid var(--border2)">' + sr.length + '</td>' +
+          '<td class="sdt-name red">TOPLAM</td>' +
+          '<td class="sdt-num red">' + evet + '</td>' +
+          '<td class="sdt-num green">' + hayir + '</td>' +
+          '<td class="sdt-num muted">' + bel + '</td>' +
+          '<td class="sdt-num">' + sr.length + '</td>' +
         '</tr></tfoot>' +
       '</table>';
     grid.appendChild(card);
@@ -953,7 +953,7 @@ function exportExcel() {
 function exportCsv() {
   var rows = filteredRows.length ? filteredRows : allRows;
   var lines = ['Sayfa,TİP,AY,Test Kaynaklı'].concat(
-    rows.map(function(r){ return [r._sayfa,r.tip,r.ay,r.testKaynakli===null?'BELİRSİZ':r.testKaynakli?'EVET':'HAYIR'].join(','); })
+    rows.map(function(r){ return [r._sayfa,r.tip,r.ay,r.testKaynakli===null?'BELİRSİZ':r.testKaynakli?'EVET':'HAYIR'].map(csvVal).join(','); })
   );
   var blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -1002,16 +1002,34 @@ function mevcutTipler(rows) {
     .concat(Array.from(set).filter(function(t){ return TIP_ORDER.indexOf(t)===-1; }).sort());
 }
 
+var AY_LABEL = {
+  'OCAK':'Ocak','SUBAT':'Sub','\u015EUBAT':'\u015Eub','MART':'Mar',
+  'NISAN':'Nis','N\u0130SAN':'Nis','MAYIS':'May','MAY\u0131S':'May',
+  'HAZIRAN':'Haz','HAZ\u0130RAN':'Haz','TEMMUZ':'Tem',
+  'AGUSTOS':'Agu','A\u011EUSTOS':'A\u011fu',
+  'EYLUL':'Eyl','EYL\u00DCL':'Eyl',
+  'EKIM':'Eki','EK\u0130M':'Eki','KASIM':'Kas','ARALIK':'Ara'
+};
+
 function ayGoster(ay) {
-  var MAP = {
-    'OCAK':'Ocak','SUBAT':'Sub','\u015EUBAT':'\u015Eub','MART':'Mar',
-    'NISAN':'Nis','N\u0130SAN':'Nis','MAYIS':'May','MAY\u0131S':'May',
-    'HAZIRAN':'Haz','HAZ\u0130RAN':'Haz','TEMMUZ':'Tem',
-    'AGUSTOS':'Agu','A\u011EUSTOS':'A\u011fu',
-    'EYLUL':'Eyl','EYL\u00DCL':'Eyl',
-    'EKIM':'Eki','EK\u0130M':'Eki','KASIM':'Kas','ARALIK':'Ara'
-  };
-  return MAP[ay] || ay;
+  return AY_LABEL[ay] || ay;
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function csvVal(v) {
+  var s = String(v);
+  if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
 }
 
 var toastTimer = null;

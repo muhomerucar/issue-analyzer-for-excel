@@ -1,5 +1,22 @@
 // ─── Pure logic extracted from app.js for unit testing ───────────────────────
 
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function csvVal(v) {
+  var s = String(v);
+  if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
 const TIP_ORDER = ['PR', 'KR', 'HOTFIX', 'ROLLBACK'];
 const AY_ORDER = ['OCAK', 'SUBAT', 'MART', 'NISAN', 'MAYIS', 'HAZIRAN',
                   'TEMMUZ', 'AGUSTOS', 'EYLUL', 'EKIM', 'KASIM', 'ARALIK'];
@@ -106,6 +123,45 @@ const SAMPLE_ROWS = [
   { _sayfa: 'Q2', tip: 'ROLLBACK',   ay: 'MART',        testKaynakli: true,  _raw: { MUDRLUK: 'A' } },
   { _sayfa: 'Q2', tip: '(Belirsiz)', ay: '(Belirsiz)',  testKaynakli: null,  _raw: { MUDRLUK: '' } },
 ];
+
+// ─── normStr ──────────────────────────────────────────────────────────────────
+
+// ─── escHtml ──────────────────────────────────────────────────────────────────
+
+describe('escHtml', () => {
+  test('escapes < and >', () => {
+    expect(escHtml('<script>')).toBe('&lt;script&gt;');
+  });
+  test('escapes & ', () => {
+    expect(escHtml('Q&A')).toBe('Q&amp;A');
+  });
+  test('escapes double quotes', () => {
+    expect(escHtml('"value"')).toBe('&quot;value&quot;');
+  });
+  test('escapes single quotes', () => {
+    expect(escHtml("it's")).toBe('it&#39;s');
+  });
+  test('leaves safe strings untouched', () => {
+    expect(escHtml('PR')).toBe('PR');
+  });
+});
+
+// ─── csvVal ───────────────────────────────────────────────────────────────────
+
+describe('csvVal', () => {
+  test('leaves simple values untouched', () => {
+    expect(csvVal('PR')).toBe('PR');
+  });
+  test('wraps values containing comma in quotes', () => {
+    expect(csvVal('Q1, Sprint')).toBe('"Q1, Sprint"');
+  });
+  test('escapes existing double quotes', () => {
+    expect(csvVal('say "hello"')).toBe('"say ""hello"""');
+  });
+  test('wraps values containing newline', () => {
+    expect(csvVal('line1\nline2')).toBe('"line1\nline2"');
+  });
+});
 
 // ─── normStr ──────────────────────────────────────────────────────────────────
 
