@@ -52,6 +52,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--fh);font-size:14px
 .fmt{font-size:10px;font-family:var(--fm);background:var(--card3);
      border:1px solid var(--border2);color:var(--text3);padding:2px 8px;border-radius:3px}
 
+/* LOADING STATE */
+.loading-state{display:none;align-items:center;gap:12px;background:var(--card);
+               border:1px solid var(--border2);border-radius:8px;padding:14px 18px;box-shadow:var(--sh)}
+.loading-state.show{display:flex}
+.ls-spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--red);
+            border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ls-msg{font-size:13px;color:var(--text2)}
+
 /* FILE BAR */
 .fbar{display:none;align-items:center;gap:10px;background:var(--card);
       border:1px solid var(--border2);border-radius:8px;padding:10px 16px;box-shadow:var(--sh)}
@@ -239,7 +248,40 @@ tbody td.c{text-align:center;font-family:var(--fm)}
 .toast.warn{background:#e6a817;color:#fff}
 
 @media(max-width:700px){
-  .page{padding:14px}
+  /* Nav */
+  .nav{padding:0 12px;gap:8px}
+  .nav-sub,.nav-div,.vtag{display:none}
+  .nav-brand{font-size:12px}
+
+  /* Layout */
+  .page{padding:12px}
   .kpi-row{grid-template-columns:1fr 1fr}
-  .nav{padding:0 14px}
+  .upload-card{padding:28px 16px}
+
+  /* File bar */
+  .fbar{flex-wrap:wrap;gap:7px}
+
+  /* Filter panel */
+  .fp-body{padding:12px 14px}
+  .fp-row{gap:6px}
+  .fp-section-label{width:100%;margin-bottom:0}
+  .fp-footer{flex-wrap:wrap;gap:8px;padding:10px 14px}
+  .active-tags{padding:8px 14px}
+  .extra-filters{padding:10px 14px}
+
+  /* Table headers */
+  .tc-hdr{flex-direction:column;align-items:flex-start;gap:3px;padding:10px 14px}
+
+  /* Sayfa grid — single column */
+  .sayfa-grid{grid-template-columns:1fr}
+
+  /* Chart */
+  .chart-body{padding:12px 14px}
+}
+
+@media(max-width:480px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .nav-r{gap:4px}
+  .nbtn{padding:5px 8px;font-size:10px}
+  .btn-red{padding:6px 14px;font-size:12px}
 }

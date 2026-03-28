@@ -48,6 +48,12 @@
     </div>
   </div>
 
+  <!-- YÜKLEME GÖSTERGESİ -->
+  <div class="loading-state sec" id="loadingState">
+    <div class="ls-spinner"></div>
+    <span class="ls-msg" id="loadingMsg">Dosya okunuyor…</span>
+  </div>
+
   <!-- DOSYA BAR -->
   <div class="fbar sec" id="fileBar">
     <div class="fdot"></div>
@@ -232,6 +238,36 @@ function findCol(cols, keywords) {
   return null;
 }
 
+// ─── SÜTUN HARİTASI HAFIZASI ─────────────────────────────────────────────────
+var LS_COL_KEY = 'qa_col_map';
+
+function colMapKaydet() {
+  try { localStorage.setItem(LS_COL_KEY, JSON.stringify({tip: colMap.tip, ay: colMap.ay, test: colMap.test})); } catch(e) {}
+}
+
+function colMapYukle() {
+  try { var s = localStorage.getItem(LS_COL_KEY); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+}
+
+// ─── FİLTRE DURUMU HAFIZASI ──────────────────────────────────────────────────
+var LS_FILTER_KEY = 'qa_filter_state';
+
+function filtreKaydet() {
+  try {
+    localStorage.setItem(LS_FILTER_KEY, JSON.stringify({
+      ay:       Array.from(selAy),
+      sayfa:    Array.from(selSayfa),
+      tip:      Array.from(selTip),
+      extra:    extraFilters,
+      trendTip: trendTip
+    }));
+  } catch(e) {}
+}
+
+function filtreYukle() {
+  try { var s = localStorage.getItem(LS_FILTER_KEY); return s ? JSON.parse(s) : null; } catch(e) { return null; }
+}
+
 function resolveColumns(cols) {
   colMap.tip  = findCol(cols, ['TIP', 'TYPE', 'ISSUETYPE', 'ISSUE TYPE']);
   colMap.ay   = findCol(cols, ['AY', 'MONTH', 'AYLAR']);
@@ -275,74 +311,128 @@ document.querySelectorAll('.copt').forEach(function(b){
     document.querySelectorAll('.copt').forEach(function(x){ x.classList.remove('on'); });
     b.classList.add('on');
     trendTip = b.dataset.tip;
+    filtreKaydet();
     trendCiz();
   });
 });
 
 // ─── DOSYA YÜKLEME ──────────────────────────────────────────────────────────
+var ALLOWED_EXT = ['.xlsx', '.xls', '.csv'];
+
+function dosyaHatasi(msg) {
+  document.getElementById('loadingState').classList.remove('show');
+  document.getElementById('dropZone').style.display = '';
+  toast(msg, 'err');
+}
+
+function yukleHataMsg(err) {
+  var m = (err && err.message) ? err.message.toLowerCase() : '';
+  if (m.indexOf('password') !== -1 || m.indexOf('encrypted') !== -1)
+    return 'Dosya şifre korumalı — şifresiz bir kopya yükleyin';
+  if (m.indexOf('zip') !== -1 || m.indexOf('cfb') !== -1 || m.indexOf('signature') !== -1)
+    return 'Dosya bozuk veya desteklenmiyor — geçerli bir .xlsx / .xls / .csv seçin';
+  return 'Dosya okunamadı — geçerli bir Excel veya CSV dosyası seçin';
+}
+
 function yukle(file) {
+  // Uzantı kontrolü — sürükle-bırak accept attribute'u atladığından burada yapılır
+  var ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+  if (ALLOWED_EXT.indexOf(ext) === -1) {
+    toast('"' + file.name + '" desteklenmiyor — yalnızca .xlsx, .xls veya .csv yükleyin', 'err');
+    return;
+  }
+
+  // Yükleme göstergesini aç
+  document.getElementById('dropZone').style.display = 'none';
+  document.getElementById('loadingMsg').textContent = 'Dosya okunuyor…';
+  document.getElementById('loadingState').classList.add('show');
+
   var reader = new FileReader();
   reader.onload = function(e) {
-    try {
-      var wb = XLSX.read(e.target.result, {type: 'binary'});
-      dataSheets = wb.SheetNames.filter(function(n){
-        return SKIP_SHEETS.indexOf(n) === -1;
-      });
-      if (!dataSheets.length) { toast('Geçerli veri sayfası bulunamadı', 'err'); return; }
-
-      // Ham satırları oku
-      var rawRows = [];
-      var firstSheetCols = null;
-      dataSheets.forEach(function(sheetName) {
-        var ws = wb.Sheets[sheetName];
-        var raw = XLSX.utils.sheet_to_json(ws, {defval: ''});
-        if (!firstSheetCols && raw.length) {
-          firstSheetCols = Object.keys(raw[0]).map(function(k){
-            return k.replace(/\n/g, ' ').trim();
-          });
-        }
-        raw.forEach(function(row) {
-          var norm = {};
-          Object.keys(row).forEach(function(k) {
-            var nk = k.replace(/\n/g, ' ').trim();
-            norm[nk] = String(row[k]).trim();
-          });
-          norm._sayfa = sheetName;
-          rawRows.push(norm);
+    // setTimeout(0): UI'nin yükleme göstergesini render etmesi için bir tick bekle
+    setTimeout(function() {
+      try {
+        document.getElementById('loadingMsg').textContent = 'Veriler işleniyor…';
+        var wb = XLSX.read(e.target.result, {type: 'array'});
+        dataSheets = wb.SheetNames.filter(function(n){
+          return SKIP_SHEETS.indexOf(n) === -1;
         });
-      });
+        if (!dataSheets.length) {
+          dosyaHatasi('Geçerli veri sayfası bulunamadı — dosyayı kontrol edin');
+          return;
+        }
 
-      allCols = firstSheetCols || [];
+        // Ham satırları oku
+        var rawRows = [];
+        var firstSheetCols = null;
+        dataSheets.forEach(function(sheetName) {
+          var ws = wb.Sheets[sheetName];
+          var raw = XLSX.utils.sheet_to_json(ws, {defval: ''});
+          if (!firstSheetCols && raw.length) {
+            firstSheetCols = Object.keys(raw[0]).map(function(k){
+              return k.replace(/\n/g, ' ').trim();
+            });
+          }
+          raw.forEach(function(row) {
+            var norm = {};
+            Object.keys(row).forEach(function(k) {
+              var nk = k.replace(/\n/g, ' ').trim();
+              norm[nk] = String(row[k]).trim();
+            });
+            norm._sayfa = sheetName;
+            rawRows.push(norm);
+          });
+        });
 
-      // Sütunları çöz
-      var ok = resolveColumns(allCols);
-      if (!ok) {
-        // Manuel eşleştirme göster
-        sutunHaritasiGoster(allCols);
-        // Geçici olarak ham satırları sakla
-        window._pendingRawRows = rawRows;
+        allCols = firstSheetCols || [];
+
+        // Sütunları çöz — önce otomatik, sonra kaydedilmiş, yoksa manuel UI
+        var ok = resolveColumns(allCols);
+        if (!ok) {
+          var saved = colMapYukle();
+          if (saved && allCols.indexOf(saved.tip) !== -1 &&
+              allCols.indexOf(saved.ay) !== -1 &&
+              allCols.indexOf(saved.test) !== -1) {
+            colMap.tip = saved.tip; colMap.ay = saved.ay; colMap.test = saved.test;
+            ok = true;
+            toast('Sütun eşleştirmesi hafızadan yüklendi', 'ok');
+          }
+        }
+
+        document.getElementById('loadingState').classList.remove('show');
+
+        if (!ok) {
+          // Manuel eşleştirme göster
+          sutunHaritasiGoster(allCols);
+          // Geçici olarak ham satırları sakla
+          window._pendingRawRows = rawRows;
+          document.getElementById('fileName').textContent = file.name;
+          document.getElementById('fileMeta').textContent = dataSheets.length + ' sayfa';
+          document.getElementById('fileBar').classList.add('show');
+          return;
+        }
+
+        satırlariIsle(rawRows);
+
+        if (allRows.length === 0) {
+          dosyaHatasi('Dosyada işlenebilir kayıt bulunamadı — boş veya yalnızca başlık satırı var');
+          return;
+        }
+
         document.getElementById('fileName').textContent = file.name;
-        document.getElementById('fileMeta').textContent = dataSheets.length + ' sayfa';
+        document.getElementById('fileMeta').textContent = dataSheets.length + ' sayfa, ' + allRows.length + ' kayit';
         document.getElementById('fileBar').classList.add('show');
-        document.getElementById('dropZone').style.display = 'none';
-        return;
+        document.getElementById('btnExport').disabled = false;
+        filtreUIKur();
+        matchCountGuncelle();
+        toast(allRows.length + ' kayıt yüklendi', 'ok');
+      } catch (err) {
+        console.error(err);
+        dosyaHatasi(yukleHataMsg(err));
       }
-
-      satırlariIsle(rawRows);
-      document.getElementById('fileName').textContent = file.name;
-      document.getElementById('fileMeta').textContent = dataSheets.length + ' sayfa, ' + allRows.length + ' kayit';
-      document.getElementById('fileBar').classList.add('show');
-      document.getElementById('dropZone').style.display = 'none';
-      document.getElementById('btnExport').disabled = false;
-      filtreUIKur();
-      matchCountGuncelle();
-      toast(allRows.length + ' kayıt yüklendi', 'ok');
-    } catch (err) {
-      toast('Dosya okunurken hata: ' + err.message, 'err');
-      console.error(err);
-    }
+    }, 0);
   };
-  reader.readAsBinaryString(file);
+  reader.readAsArrayBuffer(file);
 }
 
 function satırlariIsle(rawRows) {
@@ -398,8 +488,9 @@ function sutunHaritasiGoster(cols) {
       var opt = document.createElement('option');
       opt.value = c;
       opt.textContent = c;
-      // Otomatik tahmin
-      if (colMap[f.key] === c) opt.selected = true;
+      // Otomatik tahmin: önce mevcut colMap, yoksa kaydedilmiş
+      var saved = colMapYukle();
+      if (colMap[f.key] === c || (saved && saved[f.key] === c)) opt.selected = true;
       sel.appendChild(opt);
     });
     row.appendChild(lbl);
@@ -416,6 +507,7 @@ function sutunHaritasiUygula() {
   if (!colMap.tip || !colMap.ay || !colMap.test) {
     toast('Lütfen tüm sütunları seçin', 'warn'); return;
   }
+  colMapKaydet();
   document.getElementById('colWarn').classList.remove('show');
   satırlariIsle(window._pendingRawRows || []);
   document.getElementById('fileMeta').textContent = dataSheets.length + ' sayfa, ' + allRows.length + ' kayit';
@@ -428,6 +520,26 @@ function sutunHaritasiUygula() {
 // ─── FİLTRE UI KURULUMU ──────────────────────────────────────────────────────
 function filtreUIKur() {
   selAy = new Set(); selSayfa = new Set(); selTip = new Set(); extraFilters = {};
+
+  // Kaydedilmiş filtre durumunu yükle
+  var savedFiltre = filtreYukle();
+  if (savedFiltre) {
+    var validAy    = new Set(tumDegerler('ay',     allRows));
+    var validSayfa = new Set(dataSheets);
+    var validTip   = new Set(tumDegerler('tip',    allRows));
+    if (savedFiltre.ay)    savedFiltre.ay.forEach(function(v)    { if (validAy.has(v))    selAy.add(v); });
+    if (savedFiltre.sayfa) savedFiltre.sayfa.forEach(function(v) { if (validSayfa.has(v)) selSayfa.add(v); });
+    if (savedFiltre.tip)   savedFiltre.tip.forEach(function(v)   { if (validTip.has(v))   selTip.add(v); });
+    if (savedFiltre.extra) {
+      Object.keys(savedFiltre.extra).forEach(function(col) { extraFilters[col] = savedFiltre.extra[col]; });
+    }
+    if (savedFiltre.trendTip) {
+      trendTip = savedFiltre.trendTip;
+      document.querySelectorAll('.copt').forEach(function(b) {
+        b.classList.toggle('on', b.dataset.tip === trendTip);
+      });
+    }
+  }
 
   // AY chipleri
   var aylar = tumDegerler('ay', allRows).sort(function(a, b) {
@@ -474,6 +586,11 @@ function filtreUIKur() {
         o.value = v; o.textContent = v;
         sel.appendChild(o);
       });
+      // Kaydedilmiş değeri geri yükle
+      if (extraFilters[col]) {
+        sel.value = extraFilters[col];
+        sel.classList.add('active');
+      }
       sel.addEventListener('change', function() {
         if (sel.value) {
           extraFilters[col] = sel.value;
@@ -575,10 +692,12 @@ function matchCountGuncelle() {
   } else {
     el.innerHTML = '<strong>' + n + '</strong> / ' + tot + ' kayıt eşleşiyor';
   }
+  filtreKaydet();
 }
 
 function filtreTemizle() {
   selAy.clear(); selSayfa.clear(); selTip.clear(); extraFilters = {};
+  try { localStorage.removeItem(LS_FILTER_KEY); } catch(e) {}
   ['ayChips','sayfaChips','tipChips'].forEach(function(id) {
     var wrap = document.getElementById(id);
     if (!wrap) return;
@@ -967,6 +1086,7 @@ function exportCsv() {
 function sifirla() {
   allRows=[]; allCols=[]; dataSheets=[]; filteredRows=[];
   selAy=new Set(); selSayfa=new Set(); selTip=new Set(); extraFilters={};
+  document.getElementById('loadingState').classList.remove('show');
   document.getElementById('dropZone').style.display='';
   document.getElementById('fileBar').classList.remove('show');
   document.getElementById('filterPanel').classList.remove('show');
@@ -1039,7 +1159,8 @@ function toast(msg, type) {
   document.getElementById('toastMsg').textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 3000);
+  var dur = (type === 'err') ? 7000 : 3000;
+  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, dur);
 }
 </script>
 
