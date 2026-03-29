@@ -25,11 +25,13 @@
   <div class="nav-r">
     <span class="vtag">v2.0</span>
     <div class="expw">
-      <button class="nbtn pri" id="btnExport" disabled>↓ Dışa Aktar</button>
+      <button class="nbtn pri" id="btnExport" disabled>Dışa Aktar</button>
       <div class="expdrop" id="expDrop">
-        <div class="expopt" id="expXlsx"><div>📊</div><div><strong>Excel (.xlsx)</strong><span>Özet + ham veri</span></div></div>
-        <div class="expopt" id="expCsv"><div>📄</div><div><strong>CSV</strong><span>Filtrelenmiş kayıtlar</span></div></div>
-        <div class="expopt" id="expPrint"><div>🖨</div><div><strong>Yazdır / PDF</strong><span>Tarayıcı baskı</span></div></div>
+        <div class="expopt" id="expSave"><div>SAVE</div><div><strong>Değişiklikleri Kaydet</strong><span>Girilen değerleri tarayıcıda sakla</span></div></div>
+        <div class="expopt" id="expUpdated"><div>XLSX</div><div><strong>Güncel Excel'i İndir</strong><span>Orijinali koruyarak güncel kopyayı indir</span></div></div>
+        <div class="expopt" id="expXlsx"><div>SUM</div><div><strong>Özet Excel</strong><span>Yeni çalışma kitabı oluştur</span></div></div>
+        <div class="expopt" id="expCsv"><div>CSV</div><div><strong>CSV İndir</strong><span>Filtrelenmiş kayıtları dışa aktar</span></div></div>
+        <div class="expopt" id="expPrint"><div>PDF</div><div><strong>Yazdır / PDF</strong><span>Tarayıcı yazdırma görünümü</span></div></div>
       </div>
     </div>
   </div>
@@ -69,120 +71,196 @@
     <button class="btn-apply-map" id="btnApplyMap">Uygula ve Devam Et</button>
   </div>
 
-  <!-- FİLTRE PANELİ -->
-  <div class="filter-panel sec" id="filterPanel">
-    <div class="fp-header">
-      <div class="fp-icon">🔍</div>
-      <h3>Filtreler</h3>
-      <span class="fp-count" id="fpCount">Filtre seçilmedi</span>
-    </div>
-    <div class="fp-body">
-      <!-- AY -->
-      <div class="fp-row">
-        <span class="fp-section-label">AY</span>
-        <div class="chip-group" id="ayChips"></div>
+  <!-- TAB BAR -->
+  <div class="tab-bar" id="tabBar" style="display:none">
+    <button class="tab-btn active" id="tabBtnDashboard">Dashboard</button>
+    <button class="tab-btn" id="tabBtnEdits">Veri Düzenleme <span class="tab-badge" id="editsBadgeTab">Analiz edilmesi bekleniyor</span></button>
+  </div>
+
+  <!-- TAB: DASHBOARD -->
+  <div id="tabDashboard">
+
+    <!-- FİLTRE PANELİ -->
+    <div class="filter-panel sec" id="filterPanel">
+      <div class="fp-header">
+        <div class="fp-icon">🔍</div>
+        <h3>Filtreler</h3>
+        <span class="fp-count" id="fpCount">Filtre seçilmedi</span>
       </div>
-      <!-- SAYFA -->
-      <div class="fp-row">
-        <span class="fp-section-label">SAYFA</span>
-        <div class="chip-group" id="sayfaChips"></div>
+      <div class="fp-body">
+        <div class="fp-row">
+          <span class="fp-section-label">AY</span>
+          <div class="chip-group" id="ayChips"></div>
+        </div>
+        <div class="fp-row">
+          <span class="fp-section-label">SAYFA</span>
+          <div class="chip-group" id="sayfaChips"></div>
+        </div>
+        <div class="fp-row">
+          <span class="fp-section-label">TİP</span>
+          <div class="chip-group" id="tipChips"></div>
+        </div>
       </div>
-      <!-- TİP -->
-      <div class="fp-row">
-        <span class="fp-section-label">TİP</span>
-        <div class="chip-group" id="tipChips"></div>
+      <div class="extra-filters" id="extraFilters"></div>
+      <div class="active-tags" id="activeTags"><span class="no-filter-text">Filtre uygulanmadı — tüm kayıtlar görünüyor</span></div>
+      <div class="fp-footer">
+        <div class="match-count" id="matchCount"></div>
+        <button class="btn-out" id="btnClear">Filtreleri Temizle</button>
+        <button class="btn-red" id="btnAnalyze">Analiz Et →</button>
       </div>
     </div>
-    <!-- EK FİLTRELER -->
-    <div class="extra-filters" id="extraFilters"></div>
-    <!-- AKTİF ETİKETLER -->
-    <div class="active-tags" id="activeTags"><span class="no-filter-text">Filtre uygulanmadı — tüm kayıtlar görünüyor</span></div>
-    <!-- FOOTER -->
-    <div class="fp-footer">
-      <div class="match-count" id="matchCount"></div>
-      <button class="btn-out" id="btnClear">Filtreleri Temizle</button>
-      <button class="btn-red" id="btnAnalyze">Analiz Et →</button>
-    </div>
-  </div>
 
-  <!-- UYARI: EŞLEŞMİYOR -->
-  <div class="no-match sec" id="noMatch">
-    <div style="font-size:26px;flex-shrink:0">⚠️</div>
-    <div>
-      <h4>Eşleşen Kayıt Bulunamadı</h4>
-      <p id="noMatchMsg">Seçili filtreler hiçbir kayıtla eşleşmiyor.</p>
-    </div>
-    <div style="margin-left:auto">
-      <button class="btn-out" id="btnWarnClear">Filtreleri Temizle</button>
-    </div>
-  </div>
-
-  <!-- KPI -->
-  <div class="kpi-row sec" id="kpiRow" style="display:none">
-    <div class="kpi k-red">
-      <div class="kpi-lbl">Test Kaynaklı</div>
-      <div class="kpi-val red" id="kpiEvet">—</div>
-      <div class="kpi-sub" id="kpiEvetSub"></div>
-    </div>
-    <div class="kpi k-green">
-      <div class="kpi-lbl">Test Kaynaklı Değil</div>
-      <div class="kpi-val green" id="kpiHayir">—</div>
-      <div class="kpi-sub" id="kpiHayirSub"></div>
-    </div>
-    <div class="kpi k-bel">
-      <div class="kpi-lbl">Belirsiz</div>
-      <div class="kpi-val" style="color:#999" id="kpiBel">—</div>
-      <div class="kpi-sub" id="kpiBelSub"></div>
-    </div>
-    <div class="kpi k-amber">
-      <div class="kpi-lbl">Toplam Kayıt</div>
-      <div class="kpi-val" id="kpiToplam">—</div>
-      <div class="kpi-sub" id="kpiToplamSub"></div>
-    </div>
-    <div class="kpi k-dark">
-      <div class="kpi-lbl">Test Kaynaklı Oran</div>
-      <div class="kpi-val" id="kpiOran">—</div>
-      <div class="kpi-sub">belirsiz hariç</div>
-    </div>
-  </div>
-
-  <!-- ANA TABLO -->
-  <div class="table-card sec" id="mainCard" style="display:none">
-    <div class="tc-hdr">
-      <div class="tc-title" id="mainTitle">TİP Bazlı Özet</div>
-      <span class="tc-sub" id="mainSub"></span>
-    </div>
-    <div class="tscroll">
-      <table><thead id="mainThead"></thead><tbody id="mainTbody"></tbody></table>
-    </div>
-  </div>
-
-  <!-- TREND -->
-  <div class="chart-card sec" id="chartCard" style="display:none">
-    <div class="tc-hdr">
-      <div class="tc-title">Aylık Trend</div>
-      <span class="tc-sub" id="chartSub"></span>
-    </div>
-    <div class="chart-body">
-      <div class="chart-opts" id="chartOpts">
-        <button class="copt on" data-tip="ALL">Tümü</button>
-        <button class="copt" data-tip="PR">PR</button>
-        <button class="copt" data-tip="HOTFIX">Hotfix</button>
-        <button class="copt" data-tip="KR">KR</button>
-        <button class="copt" data-tip="ROLLBACK">Rollback</button>
+    <!-- UYARI: EŞLEŞMİYOR -->
+    <div class="no-match sec" id="noMatch">
+      <div style="font-size:26px;flex-shrink:0">⚠️</div>
+      <div>
+        <h4>Eşleşen Kayıt Bulunamadı</h4>
+        <p id="noMatchMsg">Seçili filtreler hiçbir kayıtla eşleşmiyor.</p>
       </div>
-      <div style="position:relative;width:100%;height:300px"><canvas id="trendCanvas"></canvas></div>
+      <div style="margin-left:auto">
+        <button class="btn-out" id="btnWarnClear">Filtreleri Temizle</button>
+      </div>
     </div>
-  </div>
 
-  <!-- SAYFA DETAY -->
-  <div class="sec" id="sayfaDetayWrap" style="display:none">
-    <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px">Sayfa Bazında Detay</div>
-    <div class="sayfa-grid" id="sayfaDetayGrid"></div>
-  </div>
+    <!-- KPI -->
+    <div class="kpi-row sec" id="kpiRow" style="display:none">
+      <div class="kpi k-red">
+        <div class="kpi-lbl">Test Kaynaklı</div>
+        <div class="kpi-val red" id="kpiEvet">—</div>
+        <div class="kpi-sub" id="kpiEvetSub"></div>
+      </div>
+      <div class="kpi k-green">
+        <div class="kpi-lbl">Test Kaynaklı Değil</div>
+        <div class="kpi-val green" id="kpiHayir">—</div>
+        <div class="kpi-sub" id="kpiHayirSub"></div>
+      </div>
+      <div class="kpi k-bel">
+        <div class="kpi-lbl">Belirsiz</div>
+        <div class="kpi-val" style="color:#999" id="kpiBel">—</div>
+        <div class="kpi-sub" id="kpiBelSub"></div>
+      </div>
+      <div class="kpi k-amber">
+        <div class="kpi-lbl">Toplam Kayıt</div>
+        <div class="kpi-val" id="kpiToplam">—</div>
+        <div class="kpi-sub" id="kpiToplamSub"></div>
+      </div>
+      <div class="kpi k-dark">
+        <div class="kpi-lbl">Test Kaynaklı Oran</div>
+        <div class="kpi-val" id="kpiOran">—</div>
+        <div class="kpi-sub">belirsiz hariç</div>
+      </div>
+    </div>
+
+    <!-- ANA TABLO -->
+    <div class="table-card sec" id="mainCard" style="display:none">
+      <div class="tc-hdr">
+        <div class="tc-title" id="mainTitle">TİP Bazlı Özet</div>
+        <span class="tc-sub" id="mainSub"></span>
+      </div>
+      <div class="tscroll">
+        <table><thead id="mainThead"></thead><tbody id="mainTbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- TREND -->
+    <div class="chart-card sec" id="chartCard" style="display:none">
+      <div class="tc-hdr">
+        <div class="tc-title">Aylık Trend</div>
+        <span class="tc-sub" id="chartSub"></span>
+      </div>
+      <div class="chart-body">
+        <div class="chart-opts" id="chartOpts">
+          <button class="copt on" data-tip="ALL">Tümü</button>
+          <button class="copt" data-tip="PR">PR</button>
+          <button class="copt" data-tip="HOTFIX">Hotfix</button>
+          <button class="copt" data-tip="KR">KR</button>
+          <button class="copt" data-tip="ROLLBACK">Rollback</button>
+        </div>
+        <div style="position:relative;width:100%;height:300px"><canvas id="trendCanvas"></canvas></div>
+      </div>
+    </div>
+
+    <!-- SAYFA DETAY -->
+    <div class="sec" id="sayfaDetayWrap" style="display:none">
+      <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:10px">Sayfa Bazında Detay</div>
+      <div class="sayfa-grid" id="sayfaDetayGrid"></div>
+    </div>
+
+  </div><!-- /tabDashboard -->
+
+  <!-- TAB: VERİ DÜZENLEME -->
+  <div id="tabEdits" style="display:none">
+    <div class="sec" id="editsPanel">
+      <div class="table-card">
+        <div class="tc-hdr edt-hdr">
+          <div style="display:flex;align-items:center;gap:10px;flex:1">
+            <button class="edt-toggle" id="edtsToggle" aria-expanded="true">▾</button>
+            <div class="tc-title">Veri Düzenleme</div>
+            <span class="edt-badge" id="editsBadge">Düzenleme bekleyen kayıt yok</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <label class="edt-toggle-label">
+              <input type="checkbox" id="edtsOnlyMissing" checked> Yalnızca eksik kayıtları göster
+            </label>
+            <div id="editsExtraFilters" style="display:contents"></div>
+            <button class="btn-out edt-export-btn" id="edtsSaveBtn">Kaydet</button>
+            <button class="btn-red edt-export-btn" id="edtsDownloadBtn">Güncel Excel'i İndir</button>
+          </div>
+        </div>
+        <div class="edt-body" id="edtsBody">
+          <div class="edt-row-count" id="editsRowCount"></div>
+          <!-- TOPLU DÜZENLEME BARI -->
+          <div class="bulk-bar" id="bulkBar" style="display:none">
+            <span class="bulk-info" id="bulkInfo">0 satır seçili</span>
+            <select class="edt-select" id="bulkSelTk">
+              <option value="">Test Durumu…</option>
+              <option value="EVET">EVET</option>
+              <option value="HAYIR">HAYIR</option>
+            </select>
+            <select class="edt-select" id="bulkSelKok">
+              <option value="">Kök Neden…</option>
+            </select>
+            <input type="text" class="edt-input" id="bulkInpEkip" placeholder="Çözüm Ekibi…">
+            <button class="btn-red" id="bulkUygula">Seçililere Uygula</button>
+            <button class="btn-out" id="bulkIptal">✕</button>
+          </div>
+          <div class="tscroll">
+            <table class="edt-table">
+              <thead>
+                <tr>
+                  <th class="edt-th-cb"><input type="checkbox" id="chkAll" title="Tümünü seç"></th>
+                  <th class="edt-th-info">SAYFA</th>
+                  <th class="edt-th-info">TİP</th>
+                  <th class="edt-th-info">AY</th>
+                  <th class="edt-th-edit">KÖK NEDEN</th>
+                  <th class="edt-th-edit">ALINACAK AKSİYON</th>
+                  <th class="edt-th-edit">ÇÖZÜM EKİBİ</th>
+                  <th class="edt-th-tk">TEST KAYNAKLI</th>
+                </tr>
+              </thead>
+              <tbody id="editsTableBody"></tbody>
+            </table>
+          </div>
+          <div class="edt-pagination" id="editsPagination"></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /tabEdits -->
 
 </main>
-<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<!-- SATIR DETAY MODAL -->
+<div class="rdm-overlay" id="rowDetailModal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="rdmTitle">
+  <div class="rdm-panel">
+    <div class="rdm-hdr">
+      <span class="rdm-title" id="rdmTitle"></span>
+      <button class="rdm-close" id="rdmClose" title="Kapat" aria-label="Kapat">✕</button>
+    </div>
+    <div class="rdm-body" id="rdmBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="alert" aria-live="polite"><span id="toastMsg"></span></div>
 
 <script>
 // ─── STATE ──────────────────────────────────────────────────────────────────
@@ -204,6 +282,40 @@ var SKIP_SHEETS = ['OVERALL Q1', 'DATA'];
 var TIP_ORDER = ['PR', 'KR', 'HOTFIX', 'ROLLBACK'];
 var AY_ORDER = ['OCAK', 'SUBAT', 'MART', 'NISAN', 'MAYIS', 'HAZIRAN',
                 'TEMMUZ', 'AGUSTOS', 'EYLUL', 'EKIM', 'KASIM', 'ARALIK'];
+
+// ─── VERİ DÜZENLEME STATE ────────────────────────────────────────────────────
+var currentFile      = null;   // Yüklenen File objesi (localStorage anahtarı için)
+var currentWb        = null;   // Parsed XLSX workbook (orijinal export için)
+var editsOnlyMissing = true;   // "Sadece Belirsiz Test Kaynaklı" filtre toggle
+var editsPage        = 0;      // Mevcut sayfa (0 tabanlı)
+var EDITS_PAGE_SIZE  = 50;
+var selectedRows     = new Set();
+var editsExtraFilter = {};
+var LS_EDITS_PREFIX  = 'qa_edits_';
+
+var KOK_NEDEN_OPTIONS = [
+  '',
+  'Requirement Gap (Analysis / Design)',
+  'Configuration Issue',
+  'Environment / Infrastructure',
+  'Test Coverage Gap',
+  'User Error',
+  '3rd Party / Vendor Dependency',
+  'Change Request (New Requirement)',
+  'Non-Reproducible',
+  'Out of Test Scope',
+  'Quality Gate Bypass (Known Issue)',
+  'Integration'
+];
+
+// ─── VERİ DÜZENLEME — ÇÖZÜM NOKTASI ─────────────────────────────────────────
+// Kullanıcı düzenlemesi varsa override değeri, yoksa orijinal parse değerini döndürür.
+// KPI, grafik, tablo ve export hesaplamalarında r.testKaynakli yerine bu kullanılır.
+function efektifTest(row) {
+  var e = row._edits;
+  if (e && e.testKaynakli !== undefined) return e.testKaynakli;
+  return row.testKaynakli;
+}
 
 // ─── SÜTUN ARAMA ─────────────────────────────────────────────────────────────
 // Türkçe karakterleri normalize ederek kıyasla
@@ -238,6 +350,28 @@ function findCol(cols, keywords) {
   return null;
 }
 
+function collectRawColumns(rows, preferredOrder) {
+  var seen = new Set();
+  var ordered = [];
+
+  function pushCol(col) {
+    if (!col || col.charAt(0) === '_' || seen.has(col)) return;
+    seen.add(col);
+    ordered.push(col);
+  }
+
+  (preferredOrder || []).forEach(pushCol);
+  rows.forEach(function(row) {
+    Object.keys(row || {}).forEach(pushCol);
+  });
+  return ordered;
+}
+
+function isPreferredEditFilterColumn(col) {
+  var n = normStr(col);
+  return n.indexOf('SORUMLU QA') !== -1 || n === 'QA' || n.indexOf('QA ') !== -1 || n.indexOf(' QA') !== -1;
+}
+
 // ─── SÜTUN HARİTASI HAFIZASI ─────────────────────────────────────────────────
 var LS_COL_KEY = 'qa_col_map';
 
@@ -250,7 +384,7 @@ function colMapYukle() {
 }
 
 // ─── FİLTRE DURUMU HAFIZASI ──────────────────────────────────────────────────
-var LS_FILTER_KEY = 'qa_filter_state';
+var LS_FILTER_KEY  = 'qa_filter_state';
 
 function filtreKaydet() {
   try {
@@ -267,6 +401,451 @@ function filtreKaydet() {
 function filtreYukle() {
   try { var s = localStorage.getItem(LS_FILTER_KEY); return s ? JSON.parse(s) : null; } catch(e) { return null; }
 }
+
+// ─── VERİ DÜZENLEME — LOCALSTORAGE ───────────────────────────────────────────
+function editsLsKey() {
+  if (!currentFile) return null;
+  return LS_EDITS_PREFIX + currentFile.name + '_' + currentFile.size;
+}
+
+function editsKaydet() {
+  var key = editsLsKey();
+  if (!key) return;
+  var map = {};
+  allRows.forEach(function(row, i) {
+    if (row._edits && Object.keys(row._edits).length > 0) map[i] = row._edits;
+  });
+  try { localStorage.setItem(key, JSON.stringify(map)); } catch(e) {}
+}
+
+function editsYukle() {
+  var key = editsLsKey();
+  if (!key) return 0;
+  try {
+    var s = localStorage.getItem(key);
+    if (!s) return 0;
+    var map = JSON.parse(s);
+    var count = 0;
+    Object.keys(map).forEach(function(i) {
+      var idx = parseInt(i, 10);
+      if (allRows[idx]) { allRows[idx]._edits = map[i]; count++; }
+    });
+    return count;
+  } catch(e) { return 0; }
+}
+
+function editsVarMi() {
+  return allRows.some(function(r){ return r._edits && Object.keys(r._edits).length > 0; });
+}
+
+// ─── VERİ DÜZENLEME — YARDIMCILAR ────────────────────────────────────────────
+function editsSatirEksikMi(row) {
+  var e = row._edits || {};
+  if (efektifTest(row) === null)  return true;
+  if (!e.kokNeden)                return true;
+  if (!e.alınacakAksiyon)        return true;
+  if (!e.cozumEkibi)             return true;
+  return false;
+}
+
+function editsGorunurSatirlar() {
+  var rows = editsOnlyMissing
+    ? allRows.filter(function(r){ return efektifTest(r) === null; })
+    : allRows;
+  var keys = Object.keys(editsExtraFilter);
+  if (keys.length === 0) return rows;
+  return rows.filter(function(r) {
+    var raw = r._raw || {};
+    for (var i = 0; i < keys.length; i++) {
+      if ((raw[keys[i]] || '') !== editsExtraFilter[keys[i]]) return false;
+    }
+    return true;
+  });
+}
+
+function editsFiltrelerKur() {
+  var cont = document.getElementById('editsExtraFilters');
+  if (!cont) return;
+  cont.innerHTML = '';
+  var EDIT_COLS_NORM = ['KOK NEDEN', 'ALINACAK AKSIYON', 'COZUM EKIBI'];
+  var skipKeys = [colMap.tip, colMap.ay, colMap.test, '_sayfa', '_raw'];
+  var ekKollar = allCols.filter(function(c) {
+    if (skipKeys.indexOf(c) !== -1) return false;
+    if (c.indexOf('KAYIT') !== -1 || c.indexOf('AKSIYON') !== -1) return false;
+    if (EDIT_COLS_NORM.indexOf(normStr(c)) !== -1) return false;
+    return true;
+  });
+  ekKollar.forEach(function(col) {
+    var vals = tumDegerler('_raw.' + col, allRows);
+    if (vals.length < 2) return;
+    if (vals.length > 60 && !isPreferredEditFilterColumn(col)) return;
+    var sel = document.createElement('select');
+    sel.className = 'ef-select';
+    sel.dataset.col = col;
+    sel.title = col;
+    sel.innerHTML = '<option value="">' + col + '…</option>';
+    vals.sort().forEach(function(v) {
+      var opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    if (editsExtraFilter[col]) {
+      sel.value = editsExtraFilter[col];
+      sel.classList.add('active');
+    }
+    sel.addEventListener('change', function() {
+      if (sel.value) {
+        editsExtraFilter[col] = sel.value;
+        sel.classList.add('active');
+      } else {
+        delete editsExtraFilter[col];
+        sel.classList.remove('active');
+      }
+      editsPage = 0;
+      editsPanelGuncelle();
+    });
+    cont.appendChild(sel);
+  });
+}
+
+function editsBadgeGuncelle() {
+  var belirsiz = allRows.filter(function(r) { return efektifTest(r) === null; }).length;
+  var badge = document.getElementById('editsBadge');
+  if (badge) {
+    badge.textContent = belirsiz > 0
+      ? 'Düzenleme bekleyen ' + belirsiz + ' kayıt'
+      : (allRows.length > 0 ? 'Tüm kayıtlar tamamlandı' : 'Analiz sonrası durum burada gösterilecek');
+  }
+  var badgeTab = document.getElementById('editsBadgeTab');
+  if (badgeTab) {
+    badgeTab.textContent = belirsiz > 0
+      ? belirsiz + ' adet belirsiz kayıt mevcut'
+      : (allRows.length > 0 ? 'Belirsiz kayıt bulunmuyor' : 'Analiz edilmesi bekleniyor');
+  }
+}
+
+function tabGoster(name) {
+  var dashboard = document.getElementById('tabDashboard');
+  var edits     = document.getElementById('tabEdits');
+  var btnD      = document.getElementById('tabBtnDashboard');
+  var btnE      = document.getElementById('tabBtnEdits');
+  if (!dashboard || !edits) return;
+  if (name === 'edits') {
+    dashboard.style.display = 'none';
+    edits.style.display = '';
+    if (btnD) btnD.classList.remove('active');
+    if (btnE) btnE.classList.add('active');
+    editsFiltrelerKur();
+    editsPanelGuncelle();
+  } else {
+    edits.style.display = 'none';
+    dashboard.style.display = '';
+    if (btnE) btnE.classList.remove('active');
+    if (btnD) btnD.classList.add('active');
+  }
+}
+
+// ─── VERİ DÜZENLEME — HÜCRE GÜNCELLEME ───────────────────────────────────────
+function editHucreGuncelle(rowIdx, field, value) {
+  if (!allRows[rowIdx]._edits) allRows[rowIdx]._edits = {};
+  if (value === '' || value === undefined) {
+    delete allRows[rowIdx]._edits[field];
+  } else if (field === 'testKaynakli') {
+    allRows[rowIdx]._edits.testKaynakli = (value === 'EVET') ? true : false;
+  } else {
+    allRows[rowIdx]._edits[field] = value;
+  }
+  editsKaydet();
+  editsBadgeGuncelle();
+  var tr = document.querySelector('tr[data-row-idx="' + rowIdx + '"]');
+  if (tr) {
+    var eksik = editsSatirEksikMi(allRows[rowIdx]);
+    var edited = allRows[rowIdx]._edits && Object.keys(allRows[rowIdx]._edits).length > 0;
+    tr.classList.toggle('edt-row-missing', eksik);
+    tr.classList.toggle('edt-row-edited', edited && !eksik);
+  }
+}
+
+// ─── VERİ DÜZENLEME — PANEL RENDER ───────────────────────────────────────────
+function editsPanelGuncelle() {
+  var satirlar = editsGorunurSatirlar();
+  var total    = satirlar.length;
+  var pageCount = Math.max(1, Math.ceil(total / EDITS_PAGE_SIZE));
+  if (editsPage >= pageCount) editsPage = pageCount - 1;
+
+  var start = editsPage * EDITS_PAGE_SIZE;
+  var slice = satirlar.slice(start, start + EDITS_PAGE_SIZE);
+
+  var rc = document.getElementById('editsRowCount');
+  if (rc) {
+    rc.textContent = total + ' satır' + (editsOnlyMissing ? ' (Belirsiz Test Kaynaklı)' : '') +
+      (total > EDITS_PAGE_SIZE ? ' — ' + (start+1) + '–' + Math.min(start+EDITS_PAGE_SIZE, total) + ' gösteriliyor' : '');
+  }
+
+  var tbody = document.getElementById('editsTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  slice.forEach(function(row) {
+    var rowIdx = allRows.indexOf(row);
+    var e = row._edits || {};
+    var eksik  = editsSatirEksikMi(row);
+    var edited  = row._edits && Object.keys(row._edits).length > 0;
+    var tk = efektifTest(row);
+
+    var tr = document.createElement('tr');
+    tr.dataset.rowIdx = rowIdx;
+    if (eksik)         tr.classList.add('edt-row-missing');
+    else if (edited)   tr.classList.add('edt-row-edited');
+
+    var tdCb = document.createElement('td');
+    tdCb.className = 'edt-cell-cb';
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = selectedRows.has(rowIdx);
+    cb.addEventListener('change', function() {
+      if (cb.checked) selectedRows.add(rowIdx); else selectedRows.delete(rowIdx);
+      bulkBarGuncelle();
+    });
+    tdCb.appendChild(cb);
+    tr.appendChild(tdCb);
+
+    ['_sayfa','tip','ay'].forEach(function(f) {
+      var td = document.createElement('td');
+      td.className = 'edt-cell-info';
+      td.textContent = row[f] || '—';
+      td.title = 'Tüm sütunları görüntüle';
+      td.addEventListener('click', function(){ satirDetayGoster(rowIdx); });
+      tr.appendChild(td);
+    });
+
+    var tdKok = document.createElement('td');
+    tdKok.className = 'edt-cell-edit';
+    var selKok = document.createElement('select');
+    selKok.className = 'edt-select' + (e.kokNeden ? ' filled' : '');
+    KOK_NEDEN_OPTIONS.forEach(function(opt) {
+      var o = document.createElement('option');
+      o.value = opt; o.textContent = opt || '— Seçiniz —';
+      if (e.kokNeden === opt) o.selected = true;
+      selKok.appendChild(o);
+    });
+    selKok.addEventListener('change', function() {
+      selKok.className = 'edt-select' + (selKok.value ? ' filled' : '');
+      editHucreGuncelle(rowIdx, 'kokNeden', selKok.value);
+    });
+    tdKok.appendChild(selKok); tr.appendChild(tdKok);
+
+    var tdAks = document.createElement('td');
+    tdAks.className = 'edt-cell-edit';
+    var inpAks = document.createElement('input');
+    inpAks.type = 'text'; inpAks.className = 'edt-input' + (e.alınacakAksiyon ? ' filled' : '');
+    inpAks.value = e.alınacakAksiyon || '';
+    inpAks.placeholder = 'Aksiyon girin…';
+    inpAks.addEventListener('change', function() {
+      inpAks.className = 'edt-input' + (inpAks.value ? ' filled' : '');
+      editHucreGuncelle(rowIdx, 'alınacakAksiyon', inpAks.value.trim());
+    });
+    tdAks.appendChild(inpAks); tr.appendChild(tdAks);
+
+    var tdEkip = document.createElement('td');
+    tdEkip.className = 'edt-cell-edit';
+    var inpEkip = document.createElement('input');
+    inpEkip.type = 'text'; inpEkip.className = 'edt-input' + (e.cozumEkibi ? ' filled' : '');
+    inpEkip.value = e.cozumEkibi || '';
+    inpEkip.placeholder = 'Ekip adı…';
+    inpEkip.addEventListener('change', function() {
+      inpEkip.className = 'edt-input' + (inpEkip.value ? ' filled' : '');
+      editHucreGuncelle(rowIdx, 'cozumEkibi', inpEkip.value.trim());
+    });
+    tdEkip.appendChild(inpEkip); tr.appendChild(tdEkip);
+
+    var tdTk = document.createElement('td');
+    var selTk = document.createElement('select');
+    var tkClass = tk === true ? ' tk-evet' : tk === false ? ' tk-hayir' : '';
+    selTk.className = 'edt-select' + tkClass;
+    [['', 'Belirsiz'], ['EVET', 'EVET'], ['HAYIR', 'HAYIR']].forEach(function(pair) {
+      var o = document.createElement('option');
+      o.value = pair[0]; o.textContent = pair[1];
+      if ((pair[0] === 'EVET' && tk === true) ||
+          (pair[0] === 'HAYIR' && tk === false) ||
+          (pair[0] === '' && tk === null)) o.selected = true;
+      selTk.appendChild(o);
+    });
+    selTk.addEventListener('change', function() {
+      var tkClass = selTk.value === 'EVET' ? ' tk-evet' : selTk.value === 'HAYIR' ? ' tk-hayir' : '';
+      selTk.className = 'edt-select' + tkClass;
+      editHucreGuncelle(rowIdx, 'testKaynakli', selTk.value);
+    });
+    tdTk.appendChild(selTk); tr.appendChild(tdTk);
+
+    tbody.appendChild(tr);
+  });
+
+  var pg = document.getElementById('editsPagination');
+  if (!pg) return;
+  pg.innerHTML = '';
+  if (pageCount <= 1) return;
+
+  var prevBtn = document.createElement('button');
+  prevBtn.className = 'edt-pg-btn'; prevBtn.textContent = '‹ Önceki';
+  prevBtn.disabled = editsPage === 0;
+  prevBtn.addEventListener('click', function(){ editsPage--; editsPanelGuncelle(); });
+  pg.appendChild(prevBtn);
+
+  for (var p = 0; p < pageCount; p++) {
+    (function(pi) {
+      var btn = document.createElement('button');
+      btn.className = 'edt-pg-btn' + (pi === editsPage ? ' active' : '');
+      btn.textContent = pi + 1;
+      btn.addEventListener('click', function(){ editsPage = pi; editsPanelGuncelle(); });
+      pg.appendChild(btn);
+    })(p);
+  }
+
+  var nextBtn = document.createElement('button');
+  nextBtn.className = 'edt-pg-btn'; nextBtn.textContent = 'Sonraki ›';
+  nextBtn.disabled = editsPage >= pageCount - 1;
+  nextBtn.addEventListener('click', function(){ editsPage++; editsPanelGuncelle(); });
+  pg.appendChild(nextBtn);
+
+  var info = document.createElement('span');
+  info.className = 'edt-pg-info';
+  info.textContent = (editsPage + 1) + ' / ' + pageCount + ' sayfa';
+  pg.appendChild(info);
+
+  editsBadgeGuncelle();
+}
+
+// ─── SATIR DETAY MODAL ───────────────────────────────────────────────────────
+function satirDetayGoster(rowIdx) {
+  var row = allRows[rowIdx];
+  if (!row) return;
+  var modal = document.getElementById('rowDetailModal');
+  var title = document.getElementById('rdmTitle');
+  var body  = document.getElementById('rdmBody');
+  if (!modal || !body) return;
+
+  var excelRow = (row._sheetRowIdx !== undefined) ? ' · Satır ' + (row._sheetRowIdx + 2) : '';
+  title.textContent = [row._sayfa, row.tip, row.ay].filter(Boolean).join(' · ') + excelRow;
+
+  var html = '<p class="rdm-section">Ham Veri</p><table class="rdm-table">';
+  var raw = row._raw || {};
+  Object.keys(raw).forEach(function(k) {
+    if (k.charAt(0) === '_') return;
+    var v = raw[k];
+    if (v === null || v === undefined || v === '') return;
+    html += '<tr><td>' + escHtml(String(k)) + '</td><td>' + escHtml(String(v)) + '</td></tr>';
+  });
+  html += '</table>';
+
+  var e = row._edits || {};
+  var tk = efektifTest(row);
+  var tkClass = tk === true ? ' tk-evet' : tk === false ? ' tk-hayir' : '';
+  html += '<p class="rdm-section">Düzenle</p><div class="rdm-edit-form">';
+
+  html += '<div class="rdm-field"><label>Test Kaynaklı</label>';
+  html += '<select class="edt-select' + tkClass + '" id="rdmSelTk">';
+  [['', 'Belirsiz'], ['EVET', 'EVET'], ['HAYIR', 'HAYIR']].forEach(function(p) {
+    var sel = (p[0] === 'EVET' && tk === true) || (p[0] === 'HAYIR' && tk === false) || (p[0] === '' && tk === null) ? ' selected' : '';
+    html += '<option value="' + p[0] + '"' + sel + '>' + p[1] + '</option>';
+  });
+  html += '</select></div>';
+
+  html += '<div class="rdm-field"><label>Kök Neden</label>';
+  html += '<select class="edt-select' + (e.kokNeden ? ' filled' : '') + '" id="rdmSelKok">';
+  KOK_NEDEN_OPTIONS.forEach(function(opt) {
+    var sel = e.kokNeden === opt ? ' selected' : '';
+    html += '<option value="' + escHtml(opt) + '"' + sel + '>' + escHtml(opt || '— Seçiniz —') + '</option>';
+  });
+  html += '</select></div>';
+
+  html += '<div class="rdm-field"><label>Alınacak Aksiyon</label>';
+  html += '<input type="text" class="edt-input' + (e.alınacakAksiyon ? ' filled' : '') + '" id="rdmInpAks" value="' + escHtml(e.alınacakAksiyon || '') + '" placeholder="Aksiyon girin…"></div>';
+
+  html += '<div class="rdm-field"><label>Çözüm Ekibi</label>';
+  html += '<input type="text" class="edt-input' + (e.cozumEkibi ? ' filled' : '') + '" id="rdmInpEkip" value="' + escHtml(e.cozumEkibi || '') + '" placeholder="Ekip adı…"></div>';
+
+  html += '</div>';
+  body.innerHTML = html;
+
+  var selTk = document.getElementById('rdmSelTk');
+  selTk.addEventListener('change', function() {
+    var cls = selTk.value === 'EVET' ? ' tk-evet' : selTk.value === 'HAYIR' ? ' tk-hayir' : '';
+    selTk.className = 'edt-select' + cls;
+    editHucreGuncelle(rowIdx, 'testKaynakli', selTk.value);
+    editsPanelGuncelle();
+  });
+
+  var selKok = document.getElementById('rdmSelKok');
+  selKok.addEventListener('change', function() {
+    selKok.className = 'edt-select' + (selKok.value ? ' filled' : '');
+    editHucreGuncelle(rowIdx, 'kokNeden', selKok.value);
+    editsPanelGuncelle();
+  });
+
+  var inpAks = document.getElementById('rdmInpAks');
+  inpAks.addEventListener('change', function() {
+    inpAks.className = 'edt-input' + (inpAks.value ? ' filled' : '');
+    editHucreGuncelle(rowIdx, 'alınacakAksiyon', inpAks.value.trim());
+    editsPanelGuncelle();
+  });
+
+  var inpEkip = document.getElementById('rdmInpEkip');
+  inpEkip.addEventListener('change', function() {
+    inpEkip.className = 'edt-input' + (inpEkip.value ? ' filled' : '');
+    editHucreGuncelle(rowIdx, 'cozumEkibi', inpEkip.value.trim());
+    editsPanelGuncelle();
+  });
+
+  modal.style.display = 'flex';
+}
+
+function satirDetayGizle() {
+  var modal = document.getElementById('rowDetailModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function bulkBarGuncelle() {
+  var bar = document.getElementById('bulkBar');
+  var info = document.getElementById('bulkInfo');
+  if (!bar) return;
+  if (selectedRows.size === 0) {
+    bar.style.display = 'none';
+    var chkAll = document.getElementById('chkAll');
+    if (chkAll) chkAll.checked = false;
+  } else {
+    bar.style.display = 'flex';
+    if (info) info.textContent = selectedRows.size + ' satır seçili';
+  }
+}
+
+function bulkUygula() {
+  var tk   = document.getElementById('bulkSelTk').value;
+  var kok  = document.getElementById('bulkSelKok').value;
+  var ekip = document.getElementById('bulkInpEkip').value.trim();
+  if (!tk && !kok && !ekip) { toast('En az bir alan doldurun', 'warn'); return; }
+  selectedRows.forEach(function(rowIdx) {
+    if (tk)   editHucreGuncelle(rowIdx, 'testKaynakli', tk);
+    if (kok)  editHucreGuncelle(rowIdx, 'kokNeden', kok);
+    if (ekip) editHucreGuncelle(rowIdx, 'cozumEkibi', ekip);
+  });
+  toast(selectedRows.size + ' satıra uygulandı', 'ok');
+  selectedRows.clear();
+  bulkBarGuncelle();
+  editsPanelGuncelle();
+}
+
+function editsPanelGoster() {
+  editsOnlyMissing = true;
+  editsPage = 0;
+  selectedRows.clear();
+  editsExtraFilter = {};
+  var cb = document.getElementById('edtsOnlyMissing');
+  if (cb) cb.checked = true;
+  editsFiltrelerKur();
+  editsBadgeGuncelle();
+}
+
 
 function resolveColumns(cols) {
   colMap.tip  = findCol(cols, ['TIP', 'TYPE', 'ISSUETYPE', 'ISSUE TYPE']);
@@ -300,6 +879,8 @@ document.getElementById('btnExport').addEventListener('click', function(e){
 });
 document.addEventListener('click', function(){ document.getElementById('expDrop').classList.remove('open'); });
 document.getElementById('expDrop').addEventListener('click', function(e){ e.stopPropagation(); });
+document.getElementById('expSave').addEventListener('click', saveCurrentEdits);
+document.getElementById('expUpdated').addEventListener('click', downloadUpdatedExcel);
 document.getElementById('expXlsx').addEventListener('click', exportExcel);
 document.getElementById('expCsv').addEventListener('click', exportCsv);
 document.getElementById('expPrint').addEventListener('click', function(){
@@ -314,6 +895,64 @@ document.querySelectorAll('.copt').forEach(function(b){
     filtreKaydet();
     trendCiz();
   });
+});
+document.getElementById('edtsToggle').addEventListener('click', function(){
+  var body = document.getElementById('edtsBody');
+  var btn  = document.getElementById('edtsToggle');
+  body.classList.toggle('collapsed');
+  btn.textContent = body.classList.contains('collapsed') ? '▸' : '▾';
+  btn.setAttribute('aria-expanded', !body.classList.contains('collapsed'));
+});
+document.getElementById('edtsOnlyMissing').addEventListener('change', function(){
+  editsOnlyMissing = this.checked;
+  editsPage = 0;
+  editsPanelGuncelle();
+});
+document.getElementById('edtsSaveBtn').addEventListener('click', saveCurrentEdits);
+document.getElementById('edtsDownloadBtn').addEventListener('click', downloadUpdatedExcel);
+document.getElementById('tabBtnDashboard').addEventListener('click', function(){ tabGoster('dashboard'); });
+document.getElementById('tabBtnEdits').addEventListener('click', function(){ tabGoster('edits'); });
+document.getElementById('rowDetailModal').addEventListener('click', function(e){
+  if (e.target === this) satirDetayGizle();
+});
+document.getElementById('rdmClose').addEventListener('click', satirDetayGizle);
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape') satirDetayGizle(); });
+document.getElementById('edtsBody').addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter') return;
+  var el = e.target;
+  if (el.tagName !== 'INPUT' && el.tagName !== 'SELECT') return;
+  e.preventDefault();
+  var tr = el.closest('tr');
+  if (!tr) return;
+  var nextTr = tr.nextElementSibling;
+  if (!nextTr) return;
+  var sameColIndex = Array.from(tr.cells).indexOf(el.closest('td'));
+  var nextTd = nextTr.cells[sameColIndex];
+  if (!nextTd) return;
+  var nextEl = nextTd.querySelector('input, select');
+  if (nextEl) nextEl.focus();
+});
+(function() {
+  var sel = document.getElementById('bulkSelKok');
+  KOK_NEDEN_OPTIONS.forEach(function(opt) {
+    if (!opt) return;
+    var o = document.createElement('option'); o.value = opt; o.textContent = opt; sel.appendChild(o);
+  });
+})();
+document.getElementById('chkAll').addEventListener('change', function() {
+  var visible = editsGorunurSatirlar();
+  var start = editsPage * EDITS_PAGE_SIZE;
+  var slice = visible.slice(start, start + EDITS_PAGE_SIZE);
+  slice.forEach(function(row) {
+    var idx = allRows.indexOf(row);
+    if (this.checked) selectedRows.add(idx); else selectedRows.delete(idx);
+  }.bind(this));
+  bulkBarGuncelle();
+  editsPanelGuncelle();
+});
+document.getElementById('bulkUygula').addEventListener('click', bulkUygula);
+document.getElementById('bulkIptal').addEventListener('click', function() {
+  selectedRows.clear(); bulkBarGuncelle(); editsPanelGuncelle();
 });
 
 // ─── DOSYA YÜKLEME ──────────────────────────────────────────────────────────
@@ -340,6 +979,13 @@ function yukle(file) {
   if (ALLOWED_EXT.indexOf(ext) === -1) {
     toast('"' + file.name + '" desteklenmiyor — yalnızca .xlsx, .xls veya .csv yükleyin', 'err');
     return;
+  }
+
+  // Mevcut düzenlemeler varsa yeni dosya yüklenmeden önce kullanıcıyı uyar
+  if (editsVarMi()) {
+    if (!confirm('Kaydedilmemiş düzenlemeler var — dışa aktarmadan devam etmek istediğinizden emin misiniz?')) {
+      return;
+    }
   }
 
   // Yükleme göstergesini aç
@@ -373,18 +1019,19 @@ function yukle(file) {
               return k.replace(/\n/g, ' ').trim();
             });
           }
-          raw.forEach(function(row) {
+          raw.forEach(function(row, rowIdx) {
             var norm = {};
             Object.keys(row).forEach(function(k) {
               var nk = k.replace(/\n/g, ' ').trim();
               norm[nk] = String(row[k]).trim();
             });
             norm._sayfa = sheetName;
+            norm._sheetRowIdx = rowIdx;
             rawRows.push(norm);
           });
         });
 
-        allCols = firstSheetCols || [];
+        allCols = collectRawColumns(rawRows, firstSheetCols || []);
 
         // Sütunları çöz — önce otomatik, sonra kaydedilmiş, yoksa manuel UI
         var ok = resolveColumns(allCols);
@@ -419,10 +1066,18 @@ function yukle(file) {
           return;
         }
 
+        // Dosyayı kaydet ve önceki düzenlemeleri geri yükle
+        currentFile = file;
+        currentWb   = wb;
+        var restored = editsYukle();
+        if (restored > 0) toast(restored + ' düzenleme geri yüklendi', 'ok');
+
         document.getElementById('fileName').textContent = file.name;
         document.getElementById('fileMeta').textContent = dataSheets.length + ' sayfa, ' + allRows.length + ' kayit';
         document.getElementById('fileBar').classList.add('show');
         document.getElementById('btnExport').disabled = false;
+        var tabBar = document.getElementById('tabBar');
+        if (tabBar) { tabBar.style.display = ''; tabGoster('dashboard'); }
         filtreUIKur();
         matchCountGuncelle();
         toast(allRows.length + ' kayıt yüklendi', 'ok');
@@ -458,6 +1113,7 @@ function satırlariIsle(rawRows) {
     }
     allRows.push({
       _sayfa: row._sayfa,
+      _sheetRowIdx: row._sheetRowIdx,
       tip: tip,
       ay: ay,
       testKaynakli: testKaynakli,
@@ -782,14 +1438,15 @@ function analiz() {
   trendCiz();
   sayfaDetayGuncelle(filteredRows);
   document.getElementById('btnExport').disabled = false;
+  editsPanelGoster();
   toast(filteredRows.length + ' kayıt analiz edildi', 'ok');
 }
 
 // ─── KPI ─────────────────────────────────────────────────────────────────────
 function kpiGuncelle(rows) {
-  var bel   = rows.filter(function(r){ return r.testKaynakli === null; }).length;
-  var valid = rows.filter(function(r){ return r.testKaynakli !== null; });
-  var evet  = valid.filter(function(r){ return r.testKaynakli; }).length;
+  var bel   = rows.filter(function(r){ return efektifTest(r) === null; }).length;
+  var valid = rows.filter(function(r){ return efektifTest(r) !== null; });
+  var evet  = valid.filter(function(r){ return efektifTest(r); }).length;
   var hayir = valid.length - evet;
   var oran  = valid.length ? ((evet / valid.length) * 100).toFixed(1) : '0';
   var etiket = filtreEtiketi();
@@ -822,14 +1479,14 @@ function anaTabloGuncelle(rows) {
   tipler.forEach(function(t){ matrix[t] = {evet:0, hayir:0, bel:0}; });
   rows.forEach(function(r){
     if (!matrix[r.tip]) return;
-    if (r.testKaynakli === null) matrix[r.tip].bel++;
-    else if (r.testKaynakli) matrix[r.tip].evet++;
+    if (efektifTest(r) === null) matrix[r.tip].bel++;
+    else if (efektifTest(r)) matrix[r.tip].evet++;
     else matrix[r.tip].hayir++;
   });
 
-  var topEvet   = rows.filter(function(r){ return r.testKaynakli === true; }).length;
-  var topHayir  = rows.filter(function(r){ return r.testKaynakli === false; }).length;
-  var topBel    = rows.filter(function(r){ return r.testKaynakli === null; }).length;
+  var topEvet   = rows.filter(function(r){ return efektifTest(r) === true; }).length;
+  var topHayir  = rows.filter(function(r){ return efektifTest(r) === false; }).length;
+  var topBel    = rows.filter(function(r){ return efektifTest(r) === null; }).length;
   var topToplam = rows.length;
   var topValid  = topEvet + topHayir;
 
@@ -914,9 +1571,9 @@ function trendCiz() {
       if (trendTip !== 'ALL' && row.tip !== trendTip) return false;
       return true;
     });
-    evetData.push(r.filter(function(x){ return x.testKaynakli === true; }).length);
-    hayirData.push(r.filter(function(x){ return x.testKaynakli === false; }).length);
-    belData.push(r.filter(function(x){ return x.testKaynakli === null; }).length);
+    evetData.push(r.filter(function(x){ return efektifTest(x) === true; }).length);
+    hayirData.push(r.filter(function(x){ return efektifTest(x) === false; }).length);
+    belData.push(r.filter(function(x){ return efektifTest(x) === null; }).length);
   });
 
   if (trendChart) { trendChart.destroy(); trendChart = null; }
@@ -975,16 +1632,16 @@ function sayfaDetayGuncelle(rows) {
   sayfalar.forEach(function(sayfa) {
     var sr = rows.filter(function(r){ return r._sayfa === sayfa; });
     if (!sr.length) return;
-    var evet  = sr.filter(function(r){ return r.testKaynakli === true; }).length;
-    var hayir = sr.filter(function(r){ return r.testKaynakli === false; }).length;
-    var bel   = sr.filter(function(r){ return r.testKaynakli === null; }).length;
+    var evet  = sr.filter(function(r){ return efektifTest(r) === true; }).length;
+    var hayir = sr.filter(function(r){ return efektifTest(r) === false; }).length;
+    var bel   = sr.filter(function(r){ return efektifTest(r) === null; }).length;
     var valid = evet + hayir;
     var oran  = valid ? ((evet/valid)*100).toFixed(1) : '0';
     var tipler = mevcutTipler(sr);
     var tipRows = tipler.map(function(t) {
-      var te = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===true; }).length;
-      var th = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===false; }).length;
-      var tb = sr.filter(function(r){ return r.tip===t&&r.testKaynakli===null; }).length;
+      var te = sr.filter(function(r){ return r.tip===t&&efektifTest(r)===true; }).length;
+      var th = sr.filter(function(r){ return r.tip===t&&efektifTest(r)===false; }).length;
+      var tb = sr.filter(function(r){ return r.tip===t&&efektifTest(r)===null; }).length;
       return '<tr>' +
         '<td class="sdt-name">' + escHtml(t) + '</td>' +
         '<td class="sdt-num red">' + te + '</td>' +
@@ -1032,15 +1689,15 @@ function exportExcel() {
   var tipler = mevcutTipler(rows);
   var ozet = [['TIP','Test Kaynaklı (EVET)','% (EVET)','Test Dışı (HAYIR)','% (HAYIR)','Belirsiz','Toplam','Test Oranı %']];
   tipler.forEach(function(t) {
-    var te=rows.filter(function(r){return r.tip===t&&r.testKaynakli===true;}).length;
-    var th=rows.filter(function(r){return r.tip===t&&r.testKaynakli===false;}).length;
-    var tb=rows.filter(function(r){return r.tip===t&&r.testKaynakli===null;}).length;
+    var te=rows.filter(function(r){return r.tip===t&&efektifTest(r)===true;}).length;
+    var th=rows.filter(function(r){return r.tip===t&&efektifTest(r)===false;}).length;
+    var tb=rows.filter(function(r){return r.tip===t&&efektifTest(r)===null;}).length;
     var valid=te+th;
     ozet.push([t, te, valid?+(te/valid*100).toFixed(1):0, th, valid?+(th/valid*100).toFixed(1):0, tb, te+th+tb, valid?+(te/valid*100).toFixed(1):0]);
   });
-  var e=rows.filter(function(r){return r.testKaynakli===true;}).length;
-  var h=rows.filter(function(r){return r.testKaynakli===false;}).length;
-  var b=rows.filter(function(r){return r.testKaynakli===null;}).length;
+  var e=rows.filter(function(r){return efektifTest(r)===true;}).length;
+  var h=rows.filter(function(r){return efektifTest(r)===false;}).length;
+  var b=rows.filter(function(r){return efektifTest(r)===null;}).length;
   var valid=e+h;
   ozet.push(['TOPLAM',e,valid?+(e/valid*100).toFixed(1):0,h,valid?+(h/valid*100).toFixed(1):0,b,rows.length,valid?+(e/valid*100).toFixed(1):0]);
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ozet), 'Özet');
@@ -1052,16 +1709,21 @@ function exportExcel() {
   var ayOzet = [['AY','Test Kaynaklı','Test Dışı','Belirsiz','Toplam','Test Oranı %']];
   aylar.forEach(function(ay) {
     var r=rows.filter(function(x){return x.ay===ay;});
-    var ev=r.filter(function(x){return x.testKaynakli===true;}).length;
-    var hy=r.filter(function(x){return x.testKaynakli===false;}).length;
-    var bl=r.filter(function(x){return x.testKaynakli===null;}).length;
+    var ev=r.filter(function(x){return efektifTest(x)===true;}).length;
+    var hy=r.filter(function(x){return efektifTest(x)===false;}).length;
+    var bl=r.filter(function(x){return efektifTest(x)===null;}).length;
     var v=ev+hy;
     ayOzet.push([ay, ev, hy, bl, r.length, v?+(ev/v*100).toFixed(1):0]);
   });
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ayOzet), 'Ay Bazlı');
 
-  var ham = [['Sayfa','TIP','AY','Test Kaynaklı']].concat(
-    rows.map(function(r){ return [r._sayfa, r.tip, r.ay, r.testKaynakli===null?'BELİRSİZ':r.testKaynakli?'EVET':'HAYIR']; })
+  var ham = [['Sayfa','TIP','AY','Test Kaynaklı','Kök Neden','Alınacak Aksiyon','Çözüm Ekibi']].concat(
+    rows.map(function(r){
+      var e = r._edits || {};
+      return [r._sayfa, r.tip, r.ay,
+        efektifTest(r)===null?'BELİRSİZ':efektifTest(r)?'EVET':'HAYIR',
+        e.kokNeden||'', e.alınacakAksiyon||'', e.cozumEkibi||''];
+    })
   );
   XLSX.utils.book_append_sheet(wb2, XLSX.utils.aoa_to_sheet(ham), 'Ham Veri');
   XLSX.writeFile(wb2, 'qa-issue-dashboard.xlsx');
@@ -1069,10 +1731,165 @@ function exportExcel() {
   toast('Excel indirildi', 'ok');
 }
 
+function applyEditsToAoa(aoa, sheetRows, testColName) {
+  if (!aoa || !aoa.length) return aoa;
+  var headerRow = aoa[0];
+  var EDIT_COL_NAMES = ['Kök Neden', 'Alınacak Aksiyon', 'Çözüm Ekibi'];
+  var colIdx = {};
+  EDIT_COL_NAMES.forEach(function(name) {
+    var idx = -1;
+    for (var i = 0; i < headerRow.length; i++) {
+      if (String(headerRow[i]).replace(/\n/g, ' ').trim() === name) { idx = i; break; }
+    }
+    if (idx === -1) { idx = headerRow.length; headerRow.push(name); }
+    colIdx[name] = idx;
+  });
+  var testColIdx = -1;
+  if (testColName) {
+    for (var ti = 0; ti < headerRow.length; ti++) {
+      if (String(headerRow[ti]).replace(/\n/g, ' ').trim() === testColName) {
+        testColIdx = ti; break;
+      }
+    }
+  }
+  var maxIdx = 0;
+  EDIT_COL_NAMES.forEach(function(n) { if (colIdx[n] > maxIdx) maxIdx = colIdx[n]; });
+  sheetRows.forEach(function(row) {
+    var edts = row._edits;
+    if (!edts || Object.keys(edts).length === 0) return;
+    var aoaIdx = row._sheetRowIdx + 1;
+    if (!aoa[aoaIdx]) return;
+    while (aoa[aoaIdx].length <= maxIdx) aoa[aoaIdx].push('');
+    if (edts.kokNeden        !== undefined) aoa[aoaIdx][colIdx['Kök Neden']]        = edts.kokNeden;
+    if (edts.alınacakAksiyon !== undefined) aoa[aoaIdx][colIdx['Alınacak Aksiyon']] = edts.alınacakAksiyon;
+    if (edts.cozumEkibi      !== undefined) aoa[aoaIdx][colIdx['Çözüm Ekibi']]      = edts.cozumEkibi;
+    if (edts.testKaynakli !== undefined && testColIdx !== -1) {
+      aoa[aoaIdx][testColIdx] = edts.testKaynakli === true ? 'EVET' : 'HAYIR';
+    }
+  });
+  return aoa;
+}
+
+function saveCurrentEdits() {
+  if (!currentFile) { toast('Önce bir dosya yükleyin', 'warn'); return; }
+  editsKaydet();
+  document.getElementById('expDrop').classList.remove('open');
+  toast('Değişiklikler kaydedildi', 'ok');
+}
+
+function exportUpdatedFilename(originalName) {
+  var base = originalName.replace(/\.[^.]+$/, '');
+  if (base === originalName) base = originalName;
+  return base + ' - Guncellenmis.xlsx';
+}
+
+function wsNormHeader(v) {
+  return String(v || '').replace(/\n/g, ' ').trim();
+}
+
+function wsGetRange(ws) {
+  return XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+}
+
+function wsSetRange(ws, range) {
+  ws['!ref'] = XLSX.utils.encode_range(range);
+}
+
+function wsSetTextCell(ws, rowIdx, colIdx, value) {
+  var ref = XLSX.utils.encode_cell({ r: rowIdx, c: colIdx });
+  var prev = ws[ref] || {};
+  ws[ref] = {
+    t: 's',
+    v: value,
+    w: value
+  };
+  if (prev.s) ws[ref].s = prev.s;
+  if (prev.z) ws[ref].z = prev.z;
+}
+
+function wsFindHeaderCol(ws, range, headerName) {
+  for (var c = range.s.c; c <= range.e.c; c++) {
+    var cell = ws[XLSX.utils.encode_cell({ r: range.s.r, c: c })];
+    if (wsNormHeader(cell ? cell.v : '') === headerName) return c;
+  }
+  return -1;
+}
+
+function wsEnsureHeaderCol(ws, range, headerName) {
+  var idx = wsFindHeaderCol(ws, range, headerName);
+  if (idx !== -1) return idx;
+  idx = range.e.c + 1;
+  range.e.c = idx;
+  wsSetRange(ws, range);
+  wsSetTextCell(ws, range.s.r, idx, headerName);
+  return idx;
+}
+
+function applyEditsToWorksheet(ws, sheetRows, testColName) {
+  if (!ws || !sheetRows || !sheetRows.length) return ws;
+  var range = wsGetRange(ws);
+  var headerRowIdx = range.s.r;
+  var testColIdx = testColName ? wsFindHeaderCol(ws, range, testColName) : -1;
+  var editCols = {
+    kokNeden: wsEnsureHeaderCol(ws, range, 'Kök Neden'),
+    alınacakAksiyon: wsEnsureHeaderCol(ws, range, 'Alınacak Aksiyon'),
+    cozumEkibi: wsEnsureHeaderCol(ws, range, 'Çözüm Ekibi')
+  };
+  wsSetRange(ws, range);
+
+  sheetRows.forEach(function(row) {
+    var edts = row._edits;
+    if (!edts || Object.keys(edts).length === 0) return;
+    var wsRowIdx = headerRowIdx + 1 + row._sheetRowIdx;
+    if (wsRowIdx > range.e.r) return;
+    if (edts.kokNeden !== undefined) {
+      wsSetTextCell(ws, wsRowIdx, editCols.kokNeden, edts.kokNeden);
+    }
+    if (edts.alınacakAksiyon !== undefined) {
+      wsSetTextCell(ws, wsRowIdx, editCols.alınacakAksiyon, edts.alınacakAksiyon);
+    }
+    if (edts.cozumEkibi !== undefined) {
+      wsSetTextCell(ws, wsRowIdx, editCols.cozumEkibi, edts.cozumEkibi);
+    }
+    if (edts.testKaynakli !== undefined && testColIdx !== -1) {
+      wsSetTextCell(ws, wsRowIdx, testColIdx, edts.testKaynakli === true ? 'EVET' : edts.testKaynakli === false ? 'HAYIR' : '');
+    }
+  });
+
+  return ws;
+}
+
+function cloneWorkbookForDownload(wb) {
+  var bytes = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  return XLSX.read(bytes, { type: 'array' });
+}
+
+function downloadUpdatedExcel() {
+  if (!currentWb || !currentFile) { toast('Önce bir dosya yükleyin', 'warn'); return; }
+  var wbForDownload = cloneWorkbookForDownload(currentWb);
+
+  dataSheets.forEach(function(sheetName) {
+    var ws = wbForDownload.Sheets[sheetName];
+    if (!ws) return;
+    var sheetRows = allRows.filter(function(r) { return r._sayfa === sheetName; });
+    applyEditsToWorksheet(ws, sheetRows, colMap.test || null);
+  });
+
+  var filename = exportUpdatedFilename(currentFile.name);
+  XLSX.writeFile(wbForDownload, filename);
+  document.getElementById('expDrop').classList.remove('open');
+  toast(filename + ' indirildi', 'ok');
+}
+
 function exportCsv() {
   var rows = filteredRows.length ? filteredRows : allRows;
-  var lines = ['Sayfa,TİP,AY,Test Kaynaklı'].concat(
-    rows.map(function(r){ return [r._sayfa,r.tip,r.ay,r.testKaynakli===null?'BELİRSİZ':r.testKaynakli?'EVET':'HAYIR'].map(csvVal).join(','); })
+  var lines = ['Sayfa,TİP,AY,Test Kaynaklı,Kök Neden,Alınacak Aksiyon,Çözüm Ekibi'].concat(
+    rows.map(function(r){
+      var e = r._edits || {};
+      return [r._sayfa,r.tip,r.ay,
+        efektifTest(r)===null?'BELİRSİZ':efektifTest(r)?'EVET':'HAYIR',
+        e.kokNeden||'', e.alınacakAksiyon||'', e.cozumEkibi||''].map(csvVal).join(',');
+    })
   );
   var blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a'); a.href=URL.createObjectURL(blob);
@@ -1086,6 +1903,10 @@ function exportCsv() {
 function sifirla() {
   allRows=[]; allCols=[]; dataSheets=[]; filteredRows=[];
   selAy=new Set(); selSayfa=new Set(); selTip=new Set(); extraFilters={};
+  currentFile = null; currentWb = null; editsOnlyMissing = true; editsPage = 0; selectedRows.clear(); editsExtraFilter = {};
+  var tabBar = document.getElementById('tabBar');
+  if (tabBar) tabBar.style.display = 'none';
+  tabGoster('dashboard');
   document.getElementById('loadingState').classList.remove('show');
   document.getElementById('dropZone').style.display='';
   document.getElementById('fileBar').classList.remove('show');
