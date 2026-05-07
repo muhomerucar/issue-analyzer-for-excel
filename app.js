@@ -1471,7 +1471,22 @@ var KN_LABEL_PLUGIN = {
 function buildKokNedenData(rows) {
   var counts = {};
   rows.forEach(function(r) {
-    var k = (r._edits && r._edits.kokNeden) ? r._edits.kokNeden : 'Belirlenmemiş';
+    var kok = r._edits && r._edits.kokNeden;
+    if (!kok && r._raw) {
+      var rks = Object.keys(r._raw);
+      for (var ki = 0; ki < rks.length; ki++) {
+        var n = String(rks[ki]).toUpperCase()
+          .replace(/[İı]/g, 'I')
+          .replace(/[Şş]/g, 'S')
+          .replace(/[Üü]/g, 'U')
+          .replace(/[Öö]/g, 'O')
+          .replace(/[Çç]/g, 'C')
+          .replace(/[Ğğ]/g, 'G')
+          .replace(/\s+/g, ' ').trim();
+        if (n === 'KOK NEDEN' && r._raw[rks[ki]]) { kok = r._raw[rks[ki]]; break; }
+      }
+    }
+    var k = kok || 'Belirlenmemiş';
     counts[k] = (counts[k] || 0) + 1;
   });
   var entries = Object.keys(counts).map(function(k){ return {label: k, val: counts[k]}; });

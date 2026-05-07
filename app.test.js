@@ -1282,6 +1282,28 @@ describe('buildKokNedenData', () => {
     expect(result[0]).toEqual({ label: 'Integration', val: 3 });
   });
 
+  test('_edits yoksa _raw["Kök Neden"] kullanılır (Excel import senaryosu)', () => {
+    const rows = [
+      { _raw: { 'Kök Neden': 'Configuration Issue' } },
+      { _raw: { 'Kök Neden': 'User Error' } },
+      { _raw: { 'Kök Neden': 'Configuration Issue' } },
+    ];
+    const result = buildKokNedenData(rows);
+    expect(result.find(e => e.label === 'Configuration Issue').val).toBe(2);
+    expect(result.find(e => e.label === 'User Error').val).toBe(1);
+    expect(result.find(e => e.label === 'Belirlenmemiş')).toBeUndefined();
+  });
+
+  test('_raw["KÖK NEDEN"] (büyük harf Ö) da tanınır', () => {
+    const rows = [{ _raw: { 'KÖK NEDEN': 'Test Coverage Gap' } }];
+    expect(buildKokNedenData(rows)[0].label).toBe('Test Coverage Gap');
+  });
+
+  test('_edits.kokNeden varsa _raw değerini ezer', () => {
+    const rows = [{ _edits: { kokNeden: 'User Error' }, _raw: { 'Kök Neden': 'Configuration Issue' } }];
+    expect(buildKokNedenData(rows)[0].label).toBe('User Error');
+  });
+
   test('HTML markup için kokNedenCard ve kokNedenCanvas index.html içinde bulunur ve app.js yükleniyor', () => {
     var fs = require('fs');
     var html = fs.readFileSync('index.html', 'utf8');
