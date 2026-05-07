@@ -12,6 +12,7 @@ var extraFilters = {};      // {colName: value}  ek filtreler
 
 var filteredRows = [];
 var trendChart = null;
+var kokNedenChart = null;
 var trendTip = 'ALL';
 var SKIP_SHEETS = ['OVERALL Q1', 'DATA'];
 var TIP_ORDER = ['PR', 'KR', 'HOTFIX', 'ROLLBACK'];
@@ -1186,6 +1187,7 @@ function analiz() {
     document.getElementById('kpiRow').style.display = 'none';
     document.getElementById('mainCard').style.display = 'none';
     document.getElementById('chartCard').style.display = 'none';
+    document.getElementById('kokNedenCard').style.display = 'none';
     document.getElementById('sayfaDetayWrap').style.display = 'none';
     toast('Eşleşen kayıt yok', 'warn'); return;
   }
@@ -1193,6 +1195,7 @@ function analiz() {
   kpiGuncelle(filteredRows);
   anaTabloGuncelle(filteredRows);
   trendCiz();
+  kokNedenCiz();
   sayfaDetayGuncelle(filteredRows);
   document.getElementById('btnExport').disabled = false;
   editsPanelGoster();
@@ -1376,6 +1379,200 @@ function trendCiz() {
         y: { stacked: true, beginAtZero: true, ticks: { color: '#888', font: { family: 'IBM Plex Sans', size: 11 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.06)' } }
       }
     }
+  });
+}
+
+// ─── KÖK NEDEN PIE ────────────────────────────────────────────────────────────
+var KOK_NEDEN_COLORS = [
+  '#C00000', // kırmızı
+  '#D44E08', // yakık turuncu
+  '#D48800', // kehribar
+  '#8A9400', // zeytin yeşili
+  '#3D8A00', // çimen yeşili
+  '#15692A', // orman yeşili
+  '#007870', // koyu teal
+  '#005F9E', // okyanus mavisi
+  '#1A3FB0', // koyu mavi
+  '#5A3D9E', // indigo
+  '#8A006E', // viyole
+  '#B01060', // fuşya
+  '#7A3018', // kestane
+  '#3A5E60', // çam yeşili
+  '#50505A'  // arduvaz gri
+];
+
+var KN_LABEL_PLUGIN = {
+  id: 'knOuterLabels',
+  afterDraw: function(chart) {
+    if (chart.width < 480) return;
+    var ctx     = chart.ctx;
+    var meta    = chart.getDatasetMeta(0);
+    if (!meta || !meta.data.length) return;
+    var dataset = chart.data.datasets[0];
+    var catTotal = dataset.data.reduce(function(s, v) { return s + v; }, 0);
+    if (!catTotal) return;
+
+    meta.data.forEach(function(arc, i) {
+      var val  = dataset.data[i];
+      if (val / catTotal < 0.04) return;
+
+      var mid    = (arc.startAngle + arc.endAngle) / 2;
+      var cx     = arc.x;
+      var cy     = arc.y;
+      var outerR = arc.outerRadius;
+      var color  = dataset.backgroundColor[i];
+      var raw    = chart.data.labels[i];
+      var label  = raw.length > 24 ? raw.slice(0, 23) + '…' : raw;
+      var pct    = ((val / catTotal) * 100).toFixed(1);
+
+      var cosM = Math.cos(mid);
+      var sinM = Math.sin(mid);
+      var side = cosM >= 0 ? 1 : -1;
+
+      var x1 = cx + cosM * (outerR + 4);
+      var y1 = cy + sinM * (outerR + 4);
+      var x2 = cx + cosM * (outerR + 22);
+      var y2 = cy + sinM * (outerR + 22);
+      var x3 = x2 + side * 20;
+
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth   = 1.5;
+      ctx.lineJoin    = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.lineTo(x3, y2);
+      ctx.stroke();
+
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(x3 + side * 2.5, y2, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      var tx = x3 + side * 8;
+      ctx.textAlign = cosM >= 0 ? 'left' : 'right';
+
+      ctx.fillStyle    = '#1a1a1a';
+      ctx.font         = '600 10px "IBM Plex Sans", sans-serif';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(label, tx, y2);
+
+      ctx.fillStyle    = '#777';
+      ctx.font         = '10px "IBM Plex Mono", monospace';
+      ctx.textBaseline = 'top';
+      ctx.fillText(val + '   %' + pct, tx, y2 + 1);
+
+      ctx.restore();
+    });
+  }
+};
+
+function buildKokNedenData(rows) {
+  var counts = {};
+  rows.forEach(function(r) {
+    var k = (r._edits && r._edits.kokNeden) ? r._edits.kokNeden : 'Belirlenmemiş';
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  var entries = Object.keys(counts).map(function(k){ return {label: k, val: counts[k]}; });
+  entries.sort(function(a, b) {
+    if (a.label === 'Belirlenmemiş') return 1;
+    if (b.label === 'Belirlenmemiş') return -1;
+    return b.val - a.val;
+  });
+  return entries;
+}
+
+function kokNedenCiz() {
+  var src = filteredRows.length ? filteredRows : allRows;
+  var entries = buildKokNedenData(src);
+
+  var card = document.getElementById('kokNedenCard');
+  if (entries.length === 0) { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+  document.getElementById('kokNedenSub').textContent = src.length + ' kayıt';
+
+  var belEntry  = entries.find(function(e){ return e.label === 'Belirlenmemiş'; });
+  var belCount  = belEntry ? belEntry.val : 0;
+  var catEntries = entries.filter(function(e){ return e.label !== 'Belirlenmemiş'; });
+  var catTotal  = catEntries.reduce(function(s, e){ return s + e.val; }, 0);
+
+  var banner = document.getElementById('knBelBanner');
+  if (belCount > 0) {
+    banner.style.display = 'flex';
+    banner.innerHTML =
+      '<div class="kn-bel-left">' +
+        '<span class="kn-bel-icon">⚠</span>' +
+        '<span><strong>' + belCount + ' kayıt</strong> için kök neden bilgisi girilmemiş</span>' +
+      '</div>' +
+      '<button class="kn-bel-btn" id="knBelGoBtn">Veri Düzenleme →</button>';
+    document.getElementById('knBelGoBtn').addEventListener('click', function() {
+      tabGoster('edits');
+    });
+  } else {
+    banner.style.display = 'none';
+  }
+
+  if (kokNedenChart) { kokNedenChart.destroy(); kokNedenChart = null; }
+
+  var legend = document.getElementById('knLegend');
+  legend.innerHTML = '';
+
+  if (catTotal === 0) {
+    legend.innerHTML =
+      '<div class="kn-empty">Henüz kök neden girilmiş kayıt yok</div>';
+    return;
+  }
+
+  var labels = catEntries.map(function(e){ return e.label; });
+  var data   = catEntries.map(function(e){ return e.val; });
+  var colors = catEntries.map(function(e, i){
+    return KOK_NEDEN_COLORS[i % KOK_NEDEN_COLORS.length];
+  });
+
+  var isMobile = window.innerWidth < 500;
+  var lrPad = isMobile ? 30 : 145;
+  var tbPad = isMobile ? 30 : 55;
+
+  kokNedenChart = new Chart(document.getElementById('kokNedenCanvas'), {
+    type: 'pie',
+    data: {
+      labels: labels,
+      datasets: [{ data: data, backgroundColor: colors, borderColor: '#fff', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: { padding: { top: tbPad, bottom: tbPad, left: lrPad, right: lrPad } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              var pct = ((ctx.parsed / catTotal) * 100).toFixed(1);
+              return ' ' + ctx.label + ': ' + ctx.parsed + ' (%' + pct + ')';
+            }
+          },
+          backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ddd',
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont:  { family: 'IBM Plex Mono', size: 11 }
+        }
+      }
+    },
+    plugins: [KN_LABEL_PLUGIN]
+  });
+
+  catEntries.forEach(function(e, i) {
+    var pct  = ((e.val / catTotal) * 100).toFixed(1);
+    var item = document.createElement('div');
+    item.className = 'kn-item';
+    item.innerHTML =
+      '<div class="kn-dot" style="background:' + colors[i] + '"></div>' +
+      '<span class="kn-lbl">' + escHtml(e.label) + '</span>' +
+      '<span class="kn-count">' + e.val + '</span>' +
+      '<span class="kn-pct">%' + pct + '</span>' +
+      '<div class="kn-bar-wrap"><div class="kn-bar" style="width:' + pct + '%;background:' + colors[i] + '"></div></div>';
+    legend.appendChild(item);
   });
 }
 
@@ -1679,11 +1876,13 @@ function sifirla() {
   document.getElementById('kpiRow').style.display='none';
   document.getElementById('mainCard').style.display='none';
   document.getElementById('chartCard').style.display='none';
+  document.getElementById('kokNedenCard').style.display='none';
   document.getElementById('sayfaDetayWrap').style.display='none';
   document.getElementById('noMatch').classList.remove('show');
   document.getElementById('fileInput').value='';
   document.getElementById('btnExport').disabled=true;
   if(trendChart){trendChart.destroy();trendChart=null;}
+  if(kokNedenChart){kokNedenChart.destroy();kokNedenChart=null;}
 }
 
 function tumDegerler(field, rows) {

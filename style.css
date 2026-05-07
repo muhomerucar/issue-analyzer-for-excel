@@ -210,6 +210,25 @@ tbody td.c{text-align:center;font-family:var(--fm)}
 .copt.on{background:var(--red);border-color:var(--red);color:#fff}
 .chart-body{padding:16px 18px}
 
+/* KÖK NEDEN */
+.kn-body{padding:16px 18px}
+.kn-bel-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:rgba(245,200,42,.1);border:1px solid rgba(245,200,42,.45);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.5}
+.kn-bel-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.kn-bel-icon{font-size:14px;flex-shrink:0;line-height:1}
+.kn-bel-banner strong{color:var(--text1)}
+.kn-bel-btn{flex-shrink:0;padding:5px 12px;background:var(--red);color:#fff;border:none;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f);white-space:nowrap;transition:opacity .15s}
+.kn-bel-btn:hover{opacity:.82}
+.kn-chart-area{width:100%;height:420px}
+.kn-legend{display:flex;flex-direction:column;gap:5px;margin-top:14px}
+.kn-item{display:flex;align-items:center;gap:8px;font-size:12px;min-width:0}
+.kn-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.kn-lbl{flex:1;min-width:0;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kn-count{font-size:11px;font-weight:600;color:var(--text2);min-width:28px;text-align:right;font-family:'IBM Plex Mono',monospace}
+.kn-pct{font-size:10px;color:var(--text3);min-width:40px;text-align:right;font-family:'IBM Plex Mono',monospace}
+.kn-bar-wrap{width:70px;flex-shrink:0;background:var(--card2);border-radius:2px;overflow:hidden}
+.kn-bar{height:4px;border-radius:2px}
+.kn-empty{font-size:12px;color:var(--text3);text-align:center;padding:24px 0;font-style:italic}
+
 /* SAYFA DETAY */
 .sayfa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
 .sdt{width:100%}
@@ -277,6 +296,10 @@ tbody td.c{text-align:center;font-family:var(--fm)}
 
   /* Chart */
   .chart-body{padding:12px 14px}
+
+  /* Kök Neden */
+  .kn-body{padding:12px 14px}
+  .kn-chart-area{height:340px}
 }
 
 @media(max-width:480px){

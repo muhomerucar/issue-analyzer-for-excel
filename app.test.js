@@ -1155,13 +1155,182 @@ describe('export action wiring contract', () => {
     expect(html).toContain('id="edtsDownloadBtn"');
   });
 
-  test('new export buttons are wired to the expected handlers in index script', () => {
+  test('new export buttons are wired to the expected handlers in app.js', () => {
+    var fs = require('fs');
+    var src = fs.readFileSync('app.js', 'utf8');
+    expect(src).toContain("document.getElementById('expSave').addEventListener('click', saveCurrentEdits);");
+    expect(src).toContain("document.getElementById('expUpdated').addEventListener('click', downloadUpdatedExcel);");
+    expect(src).toContain("document.getElementById('edtsSaveBtn').addEventListener('click', saveCurrentEdits);");
+    expect(src).toContain("document.getElementById('edtsDownloadBtn').addEventListener('click', downloadUpdatedExcel);");
+  });
+});
+
+// ─── buildKokNedenData ────────────────────────────────────────────────────────
+// app.js'teki gerçek fonksiyonu kaynak dosyadan çıkarıp vm.runInContext ile çalıştırır.
+// Tüm app.js yüklenmiyor çünkü alt kısımdaki event binder'lar DOM'a erişiyor.
+// Sadece saf fonksiyon bloğu çıkarılıp izole sandbox'ta eval ediliyor.
+var buildKokNedenData = (function() {
+  var vm  = require('vm');
+  var fs  = require('fs');
+  var src = fs.readFileSync('app.js', 'utf8');
+  var start = src.indexOf('\nfunction buildKokNedenData(');
+  if (start === -1) throw new Error('buildKokNedenData app.js içinde bulunamadı');
+  // Açılış { karakterinden itibaren iç içe parantez sayarak fonksiyon sonunu bul
+  var depth = 0, i = src.indexOf('{', start);
+  for (; i < src.length; i++) {
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}') { depth--; if (depth === 0) break; }
+  }
+  var funcSrc = src.slice(start + 1, i + 1); // +1 newline'ı atla
+  var sandbox = {};
+  vm.createContext(sandbox);
+  vm.runInContext(funcSrc, sandbox);
+  return sandbox.buildKokNedenData;
+})();
+
+describe('buildKokNedenData', () => {
+  test('boş satır listesi için boş dizi döner', () => {
+    expect(buildKokNedenData([])).toEqual([]);
+  });
+
+  test('_edits.kokNeden dolu olan satırlar doğru etiket ve sayıyla döner', () => {
+    const rows = [
+      { _edits: { kokNeden: 'Configuration Issue' } },
+      { _edits: { kokNeden: 'User Error' } },
+      { _edits: { kokNeden: 'Configuration Issue' } },
+    ];
+    const result = buildKokNedenData(rows);
+    const cfg = result.find(e => e.label === 'Configuration Issue');
+    const usr = result.find(e => e.label === 'User Error');
+    expect(cfg).toEqual({ label: 'Configuration Issue', val: 2 });
+    expect(usr).toEqual({ label: 'User Error', val: 1 });
+  });
+
+  test('_edits olmayan satırlar Belirlenmemiş olarak gruplanır', () => {
+    const rows = [
+      { testKaynakli: true },
+      { testKaynakli: false },
+    ];
+    const result = buildKokNedenData(rows);
+    expect(result).toEqual([{ label: 'Belirlenmemiş', val: 2 }]);
+  });
+
+  test('_edits var ama kokNeden boş/falsy → Belirlenmemiş', () => {
+    const rows = [
+      { _edits: {} },
+      { _edits: { kokNeden: '' } },
+      { _edits: { kokNeden: null } },
+    ];
+    const result = buildKokNedenData(rows);
+    expect(result).toEqual([{ label: 'Belirlenmemiş', val: 3 }]);
+  });
+
+  test('karışık satırlarda Belirlenmemiş her zaman listenin sonunda olur', () => {
+    const rows = [
+      { _edits: { kokNeden: 'User Error' } },
+      { testKaynakli: null },                         // _edits yok → Belirlenmemiş
+      { _edits: { kokNeden: 'User Error' } },
+      { testKaynakli: null },
+      { testKaynakli: null },                         // Belirlenmemiş sayısı en fazla (3)
+    ];
+    const result = buildKokNedenData(rows);
+    expect(result[result.length - 1].label).toBe('Belirlenmemiş');
+  });
+
+  test('Belirlenmemiş en yüksek sayıya sahip olsa bile sona yerleştirilir', () => {
+    const rows = [
+      { testKaynakli: null },
+      { testKaynakli: null },
+      { testKaynakli: null },                         // Belirlenmemiş: 3
+      { _edits: { kokNeden: 'Integration' } },        // Integration: 1
+    ];
+    const result = buildKokNedenData(rows);
+    expect(result[0].label).toBe('Integration');
+    expect(result[result.length - 1].label).toBe('Belirlenmemiş');
+  });
+
+  test('etiketler sayıya göre büyükten küçüğe sıralanır (Belirlenmemiş hariç)', () => {
+    const rows = [
+      { _edits: { kokNeden: 'A' } },
+      { _edits: { kokNeden: 'B' } },
+      { _edits: { kokNeden: 'B' } },
+      { _edits: { kokNeden: 'B' } },
+      { _edits: { kokNeden: 'C' } },
+      { _edits: { kokNeden: 'C' } },
+    ];
+    const result = buildKokNedenData(rows);
+    const vals = result.map(e => e.val);
+    for (var i = 0; i < vals.length - 1; i++) {
+      expect(vals[i]).toBeGreaterThanOrEqual(vals[i + 1]);
+    }
+    expect(result[0]).toEqual({ label: 'B', val: 3 });
+  });
+
+  test('tek satırlık liste doğru döner', () => {
+    const rows = [{ _edits: { kokNeden: 'Test Coverage Gap' } }];
+    expect(buildKokNedenData(rows)).toEqual([{ label: 'Test Coverage Gap', val: 1 }]);
+  });
+
+  test('tüm satırlar aynı kök nedene sahipse tek giriş döner', () => {
+    const rows = [
+      { _edits: { kokNeden: 'Integration' } },
+      { _edits: { kokNeden: 'Integration' } },
+      { _edits: { kokNeden: 'Integration' } },
+    ];
+    const result = buildKokNedenData(rows);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({ label: 'Integration', val: 3 });
+  });
+
+  test('HTML markup için kokNedenCard ve kokNedenCanvas index.html içinde bulunur ve app.js yükleniyor', () => {
     var fs = require('fs');
     var html = fs.readFileSync('index.html', 'utf8');
-    expect(html).toContain("document.getElementById('expSave').addEventListener('click', saveCurrentEdits);");
-    expect(html).toContain("document.getElementById('expUpdated').addEventListener('click', downloadUpdatedExcel);");
-    expect(html).toContain("document.getElementById('edtsSaveBtn').addEventListener('click', saveCurrentEdits);");
-    expect(html).toContain("document.getElementById('edtsDownloadBtn').addEventListener('click', downloadUpdatedExcel);");
+    expect(html).toContain('id="kokNedenCard"');
+    expect(html).toContain('id="kokNedenCanvas"');
+    expect(html).toContain('id="kokNedenSub"');
+    expect(html).toContain('src="app.js"');
+  });
+});
+
+// ─── kokNedenCiz entegrasyon kontratı ─────────────────────────────────────────
+// app.js source'unu okuyarak buildKokNedenData ve kokNedenCiz entegrasyonunu doğrular.
+// Bu testler üretim kodundaki fonksiyonları hedef aldığından kopyayla test sorununu
+// ortadan kaldırır: app.js bozulursa bu testler kırmızıya döner.
+describe('kokNedenCiz entegrasyon kontratı (app.js source)', () => {
+  var fs = require('fs');
+  var appSrc;
+
+  beforeAll(function() {
+    appSrc = fs.readFileSync('app.js', 'utf8');
+  });
+
+  test('buildKokNedenData app.js içinde tanımlı', () => {
+    expect(appSrc).toContain('function buildKokNedenData(');
+  });
+
+  test('kokNedenCiz app.js içinde tanımlı', () => {
+    expect(appSrc).toContain('function kokNedenCiz(');
+  });
+
+  test('kokNedenCiz içinde buildKokNedenData çağrılıyor', () => {
+    expect(appSrc).toContain('buildKokNedenData(src)');
+  });
+
+  test('analiz() içinde kokNedenCiz() çağrılıyor', () => {
+    expect(appSrc).toContain('kokNedenCiz()');
+  });
+
+  test('kokNedenChart state değişkeni tanımlı', () => {
+    expect(appSrc).toContain('var kokNedenChart');
+  });
+
+  test('reset sırasında kokNedenChart yok edilip null\'a sıfırlanıyor', () => {
+    expect(appSrc).toContain('kokNedenChart.destroy()');
+    expect(appSrc).toContain('kokNedenChart=null');
+  });
+
+  test('no-match dalında kokNedenCard gizleniyor', () => {
+    expect(appSrc).toContain("getElementById('kokNedenCard').style.display = 'none'");
   });
 });
 
